@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+    {% for entry in entries%}
+        <article class="media content-section">
+            <div class="media-body">
+                <div class="article-metadata">
+                    <a class="mr-2" href="#">{{ entry.cost }}$</a>
+                    <small class="text-muted">{{ entry.date }}</small>
+                </div>
+                <h2><a class="article-title" href="#">{{ entry.store }}</a></h2>
+                <p class="article-content"> 
+                    <div class="slidecontainer">
+                        <p>SB</p>
+                        <input type="range" min="0" max="100" value={{entry.p1_frac}}  class="slider" id="myRange">
+                        <p>SM</p>
+                    </div>
+                <p class="article-content">{{entry.comment}}</p>
+            </div>
+        </article>
+    {% endfor %}
+{% endblock content %}

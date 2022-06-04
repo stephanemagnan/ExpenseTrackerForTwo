@@ -1,0 +1,269 @@
+set FLASK_APP=app.py
+
+#to run app:
+python -m flask run
+
+# THIS IS TO PREVENT CTRL+C + flask run between edits
+set FLASK_DEBUG=1        
+
+# in WINDOWS, replace "export" with "set"
+
+#generate secure token
+python3
+>>>import secrets
+>>> secrets.token_hex(16)
+
+#create database
+python3
+from app import db
+from datetime import datetime
+db.drop_all()
+db.create_all()
+from app import User, Category, Subcategory, Method, Card, Transfer, Payment, Purchase
+
+user1 = User(username1='SB',username2='SM',email='sm@gm.ca',password='password')
+user2 = User(username1='MNL',username2='LL',email='ll@gm.ca',password='password')
+db.session.add(user1)
+db.session.add(user2)
+
+db.session.commit()
+
+method1 = Method(method='Cash')
+method2 = Method(method='Cheque')
+method3 = Method(method='Credit Card')
+method4 = Method(method='Direct')
+method5 = Method(method='eTransfer')
+method6 = Method(method='Other')
+
+db.session.add(method1)
+db.session.add(method2)
+db.session.add(method3)
+db.session.add(method4)
+db.session.add(method5)
+db.session.add(method6)
+
+db.session.commit()
+
+card1 = Card(card='SM Visa', user_id=user1.id)
+card2 = Card(card='Momentum', user_id=user1.id)
+card3 = Card(card='SB CIBC', user_id=user1.id)
+card4 = Card(card='SB Scotia', user_id=user1.id)
+
+db.session.add(card1)
+db.session.add(card2)
+db.session.add(card3)
+db.session.add(card4)
+
+db.session.commit()
+
+category1 = Category(title='Survival', user_id=user1.id)
+category2 = Category(title='Renova', user_id=user1.id)
+category3 = Category(title='Wilhaven', user_id=user1.id)
+category4 = Category(title='Utilities', user_id=user1.id)
+category5 = Category(title='Car', user_id=user1.id)
+category6 = Category(title='Travel', user_id=user1.id)
+category7 = Category(title='Subscriptions', user_id=user1.id)
+category8 = Category(title='Professional', user_id=user1.id)
+category9 = Category(title='Entertainment', user_id=user1.id)
+category10 = Category(title='Wellness', user_id=user1.id)
+category11 = Category(title='Other', user_id=user1.id)
+
+db.session.add(category1)
+db.session.add(category2)
+db.session.add(category3)
+db.session.add(category4)
+db.session.add(category5)
+db.session.add(category6)
+db.session.add(category7)
+db.session.add(category8)
+db.session.add(category9)
+db.session.add(category10)
+db.session.add(category11)
+
+db.session.commit()
+
+subcategory01 = Subcategory(subtitle='Groceries', category_id = category1.id)
+subcategory02 = Subcategory(subtitle='Pharmacy', category_id = category1.id)
+subcategory03 = Subcategory(subtitle='Clothing', category_id = category1.id)
+subcategory04 = Subcategory(subtitle='Other', category_id = category1.id)
+subcategory05 = Subcategory(subtitle='Property Tax', category_id = category2.id)
+subcategory06 = Subcategory(subtitle='Home Improvement', category_id = category2.id)
+subcategory07 = Subcategory(subtitle='Condo Fees', category_id = category2.id)
+subcategory08 = Subcategory(subtitle='Insurance', category_id = category2.id)
+subcategory09 = Subcategory(subtitle='Other', category_id = category2.id)
+subcategory10 = Subcategory(subtitle='Property Tax', category_id = category3.id)
+subcategory11 = Subcategory(subtitle='Construction', category_id = category3.id)
+subcategory12 = Subcategory(subtitle='Equipment', category_id = category3.id)
+subcategory13 = Subcategory(subtitle='Mortgage', category_id = category3.id)
+subcategory14 = Subcategory(subtitle='Other', category_id = category3.id)
+subcategory15 = Subcategory(subtitle='Internet', category_id = category4.id)
+subcategory16 = Subcategory(subtitle='Hydro', category_id = category4.id)
+subcategory17 = Subcategory(subtitle='Embridge', category_id = category4.id)
+subcategory18 = Subcategory(subtitle='Virgin (Bell)', category_id = category4.id)
+subcategory19 = Subcategory(subtitle='Koodo', category_id = category4.id)
+subcategory20 = Subcategory(subtitle='Other', category_id = category4.id)
+subcategory21 = Subcategory(subtitle='Fuel', category_id = category5.id)
+subcategory22 = Subcategory(subtitle='Maintenance', category_id = category5.id)
+subcategory23 = Subcategory(subtitle='Transit', category_id = category5.id)
+subcategory24 = Subcategory(subtitle='Other', category_id = category5.id)
+subcategory25 = Subcategory(subtitle='Accomodation', category_id = category6.id)
+subcategory26 = Subcategory(subtitle='Airfair', category_id = category6.id)
+subcategory27 = Subcategory(subtitle='Food', category_id = category6.id)
+subcategory28 = Subcategory(subtitle='Activities', category_id = category6.id)
+subcategory29 = Subcategory(subtitle='Other', category_id = category6.id)
+subcategory30 = Subcategory(subtitle='Amazon Prime', category_id = category7.id)
+subcategory31 = Subcategory(subtitle='Disney+', category_id = category7.id)
+subcategory32 = Subcategory(subtitle='Netflix', category_id = category7.id)
+subcategory33 = Subcategory(subtitle='Kindle', category_id = category7.id)
+subcategory34 = Subcategory(subtitle='Spotify', category_id = category7.id)
+subcategory35 = Subcategory(subtitle='Xbox Live', category_id = category7.id)
+subcategory36 = Subcategory(subtitle='Steam', category_id = category7.id)
+subcategory37 = Subcategory(subtitle='Education', category_id = category8.id)
+subcategory38 = Subcategory(subtitle='Equipment', category_id = category8.id)
+subcategory39 = Subcategory(subtitle='Travel', category_id = category8.id)
+subcategory40 = Subcategory(subtitle='Other', category_id = category8.id)
+subcategory41 = Subcategory(subtitle='Eating Out', category_id = category9.id)
+subcategory42 = Subcategory(subtitle='Activities', category_id = category9.id)
+subcategory43 = Subcategory(subtitle='Gifts', category_id = category9.id)
+subcategory44 = Subcategory(subtitle='Hobbies', category_id = category9.id)
+subcategory45 = Subcategory(subtitle='Other', category_id = category9.id)
+subcategory46 = Subcategory(subtitle='Sports', category_id = category10.id)
+subcategory47 = Subcategory(subtitle='Equipment', category_id = category10.id)
+subcategory48 = Subcategory(subtitle='Dental', category_id = category10.id)
+subcategory49 = Subcategory(subtitle='Health', category_id = category10.id)
+subcategory50 = Subcategory(subtitle='Personal Care', category_id = category10.id)
+subcategory51 = Subcategory(subtitle='Other', category_id = category10.id)
+subcategory52 = Subcategory(subtitle='Other', category_id = category11.id)
+
+db.session.commit()
+
+db.session.add(subcategory01)
+db.session.add(subcategory02)
+db.session.add(subcategory03)
+db.session.add(subcategory04)
+db.session.add(subcategory05)
+db.session.add(subcategory06)
+db.session.add(subcategory07)
+db.session.add(subcategory08)
+db.session.add(subcategory09)
+db.session.add(subcategory10)
+db.session.add(subcategory11)
+db.session.add(subcategory12)
+db.session.add(subcategory13)
+db.session.add(subcategory14)
+db.session.add(subcategory15)
+db.session.add(subcategory16)
+db.session.add(subcategory17)
+db.session.add(subcategory18)
+db.session.add(subcategory19)
+db.session.add(subcategory20)
+db.session.add(subcategory21)
+db.session.add(subcategory22)
+db.session.add(subcategory23)
+db.session.add(subcategory24)
+db.session.add(subcategory25)
+db.session.add(subcategory26)
+db.session.add(subcategory27)
+db.session.add(subcategory28)
+db.session.add(subcategory29)
+db.session.add(subcategory30)
+db.session.add(subcategory31)
+db.session.add(subcategory32)
+db.session.add(subcategory33)
+db.session.add(subcategory34)
+db.session.add(subcategory35)
+db.session.add(subcategory36)
+db.session.add(subcategory37)
+db.session.add(subcategory38)
+db.session.add(subcategory39)
+db.session.add(subcategory40)
+db.session.add(subcategory41)
+db.session.add(subcategory42)
+db.session.add(subcategory43)
+db.session.add(subcategory44)
+db.session.add(subcategory45)
+db.session.add(subcategory46)
+db.session.add(subcategory47)
+db.session.add(subcategory48)
+db.session.add(subcategory49)
+db.session.add(subcategory50)
+db.session.add(subcategory51)
+db.session.add(subcategory52)
+
+db.session.commit()
+
+payment01 = Payment(date=datetime(2022,1,2),paid_by=1,amount=24.95,notes="",card_id=card1.id,user_id=user1.id)
+payment02 = Payment(date=datetime(2022,1,2),paid_by=2,amount=3000,notes="",card_id=card2.id,user_id=user1.id)
+payment03 = Payment(date=datetime(2022,1,2),paid_by=2,amount=3000,notes="",card_id=card2.id,user_id=user1.id)
+payment04 = Payment(date=datetime(2022,1,2),paid_by=1,amount=945.82,notes="",card_id=card3.id,user_id=user1.id)
+
+db.session.add(payment01)
+db.session.add(payment02)
+db.session.add(payment03)
+db.session.add(payment04)
+
+db.session.commit()
+
+transfer01 = Transfer(date=datetime(2022,1,2),paid_by=1,amount=24.95,notes="",user_id=user1.id)
+transfer02 = Transfer(date=datetime(2022,1,2),paid_by=2,amount=3000,notes="CC transfer",user_id=user1.id)
+transfer03 = Transfer(date=datetime(2022,1,2),paid_by=2,amount=3000,notes="CC transfer",user_id=user1.id)
+transfer04 = Transfer(date=datetime(2022,1,2),paid_by=1,amount=945.82,notes="Mortgage",user_id=user1.id)
+
+db.session.add(transfer01)
+db.session.add(transfer02)
+db.session.add(transfer03)
+db.session.add(transfer04)
+
+db.session.commit()
+
+purchase01 = Purchase(date=datetime(2022,1,2),seller="Walmart",amount=224.95,user1_pct=50,notes="",user_id=user1.id,method_id=method1.id)
+purchase02 = Purchase(date=datetime(2022,1,2),seller="Best Buy",amount=178.99,user1_pct=0,notes="",user_id=user1.id,method_id=method2.id,card_id=card1.id)
+purchase03 = Purchase(date=datetime(2022,1,2),seller="Amazon",amount=89.45,user1_pct=50,notes="",user_id=user1.id,method_id=method2.id,card_id=card2.id)
+purchase04 = Purchase(date=datetime(2022,1,2),seller="Dollarama",amount=45.82,user1_pct=100,notes="",user_id=user1.id,method_id=method3.id)
+
+db.session.add(purchase01)
+db.session.add(purchase02)
+db.session.add(purchase03)
+db.session.add(purchase04)
+
+db.session.commit()
+
+User.query.all()
+User.query.first()
+User.query.filter_by(username2='SM').all()
+User.query.get(1)
+
+Card.query.all() 
+Method.query.all() 
+Category.query.all() 
+Subcategory.query.all() 
+
+user = User.query.filter_by(username2='SM').first()
+user.id
+user = User.query.get(1)
+
+user.transfers
+for trans in user.transfers
+    print(trans.amount)
+    print(trans.transferer)
+
+user.payments
+user.purchases
+
+# TO CLEAR ALL DATABASE, DO THIS:
+db.drop_all()
+db.create_all()
+
+
+
+python
+from app import db
+from app.models import User, Method, Card, Category, Subcategory, Payment, Transfer, Purchase
+db.create_all()
+User.query.all()
+
+from flask_bcrypt import Bcrypt
+bcrypt = Bcrypt()
+hashed_pw = bcrypt.generate_password_hash('testing').decode('utf-8')
+hashed_pw = bcrypt.generate_password_hash('testing').decode('utf-8')
+bcrypt.check_password_hash(hashed_pw,'testing')
