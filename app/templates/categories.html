@@ -15,10 +15,14 @@
                         <li class="list-group-item list-group-item-light">{{subcategory}}</li>
                         {% endfor %}
 
-                        <a class="nav-item nav-link" href="{{ url_for('new_subcategory',category=category.category) }}">New Subcategory</a>
+                        <li class="list-group-item list-group-item-light">
+                            <a href="{{ url_for('new_subcategory',category=category.category) }}">New Subcategory</a>
+                        </li>
                     </ul>
                     {% endfor %}
-                    <a class="nav-item nav-link" href="{{ url_for('new_category') }}">New Category</a>
+                    <li class="list-group-item list-group-item-light">
+                        <a href="{{ url_for('new_category') }}">New Category</a>
+                    </li>
                 </ul>
               </p>
 

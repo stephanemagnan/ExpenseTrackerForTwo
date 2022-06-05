@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <form method="POST" action="">
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Payment Methods</legend>
+            <p class='text-muted'>Each purchase and payment must reference one of these methods:
+                <ul class="list-group">
+                    {% for method in method_list %}
+                    <li class="list-group-item list-group-item-light">{{method}}</li>
+                    {% endfor %}
+                    <a class="nav-item nav-link" href="{{ url_for('new_method') }}">New Method</a>
+                </ul>
+              </p>
+
+        </fieldset>
+
+    </form>
+</div>
+    
+{% endblock content %}

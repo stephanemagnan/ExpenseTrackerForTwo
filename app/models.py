@@ -20,6 +20,7 @@ class User(db.Model, UserMixin):
     purchases = db.relationship('Purchase',backref='purchaser',lazy=True)
     transfers = db.relationship('Transfer',backref='transferer',lazy=True)
     cards = db.relationship('Card',backref='carder',lazy=True)
+    methods = db.relationship('Method',backref='methoder',lazy=True)
     categories = db.relationship('Category',backref='categoryer',lazy=True)
 
     def __repr__(self):
@@ -48,7 +49,8 @@ class Subcategory(db.Model):
 class Method(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     method = db.Column(db.String(20),nullable=False,unique=True)
-    
+   
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
     purchases = db.relationship('Purchase',backref='purchase_method',lazy=True)
 
     def __repr__(self):
@@ -95,11 +97,12 @@ class Purchase(db.Model):
     date = db.Column(db.Date,nullable=False,default=date.today)
     amount = db.Column(db.Numeric,nullable=False)
     seller = db.Column(db.String(120),nullable=False)
+    paid_by = db.Column(db.Integer,nullable=False)
     user1_pct = db.Column(db.Numeric,nullable=False)
     notes = db.Column(db.String(120))
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    method_id = db.Column(db.Integer, db.ForeignKey('method.id'), nullable=False)
+    method_id = db.Column(db.Integer, db.ForeignKey('method.id'), nullable=True)
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=True)
     
     def __repr__(self):

@@ -1,21 +1,73 @@
 {% extends "layout.html" %}
 {% block content %}
-    {% for entry in entries%}
-        <article class="media content-section">
-            <div class="media-body">
-                <div class="article-metadata">
-                    <a class="mr-2" href="#">{{ entry.cost }}$</a>
-                    <small class="text-muted">{{ entry.date }}</small>
-                </div>
-                <h2><a class="article-title" href="#">{{ entry.store }}</a></h2>
-                <p class="article-content"> 
-                    <div class="slidecontainer">
-                        <p>SB</p>
-                        <input type="range" min="0" max="100" value={{entry.p1_frac}}  class="slider" id="myRange">
-                        <p>SM</p>
+<div class="content-section">
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Purchases</legend>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.start_date.label(class="form-control-label") }}
+                        {% if form.start_date.errors %}
+                            {{ form.start_date(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.start_date.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.start_date(class="form-control form-control-lg") }}
+                        {% endif %}
                     </div>
-                <p class="article-content">{{entry.comment}}</p>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.end_date.label(class="form-control-label") }}
+                        {% if form.end_date.errors %}
+                            {{ form.end_date(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.end_date.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.end_date(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.paid_by.label(class="form-control-label") }}
+                        {{ form.paid_by(class="form-control form-control-lg") }}
+                    </div>
+                </div>
             </div>
-        </article>
-    {% endfor %}
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.shared_by.label(class="form-control-label") }}
+                        {{ form.shared_by(class="form-control form-control-lg") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.method_id.label(class="form-control-label") }}
+                        {{ form.method_id(class="form-control form-control-lg") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.card_id.label(class="form-control-label") }}
+                        {{ form.card_id(class="form-control form-control-lg") }}
+                    </div>
+                </div>
+            </div>
+            
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
 {% endblock content %}
