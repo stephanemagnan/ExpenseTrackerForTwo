@@ -44,7 +44,7 @@ class Subcategory(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
 
     def __repr__(self):
-        return f"Subcategory('{self.id}','{self.category_id},'{self.subtitle}'')"
+        return f"Subcategory('self:{self.id}','category:{self.category_id},'subtitle:{self.subtitle}'')"
 
 class Method(db.Model):
     id = db.Column(db.Integer,primary_key=True)
@@ -54,7 +54,7 @@ class Method(db.Model):
     purchases = db.relationship('Purchase',backref='purchase_method',lazy=True)
 
     def __repr__(self):
-        return f"Method('{self.id}','{self.method}')"
+        return f"Method('id:{self.id}','method:{self.method}')"
 
 class Card(db.Model):
     id = db.Column(db.Integer,primary_key=True)
@@ -65,7 +65,7 @@ class Card(db.Model):
     purchases = db.relationship('Purchase',backref='card_used',lazy=True)
     
     def __repr__(self):
-        return f"Card('{self.id}','{self.user_id}','{self.card}')"
+        return f"Card('id:{self.id}','user:{self.user_id}','card:{self.card}')"
 
 class Transfer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -77,7 +77,7 @@ class Transfer(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     def __repr__(self):
-        return f"Transfer('{self.id}','{self.user_id}','{self.date}','{self.paid_by}','{self.amount}')"
+        return f"Transfer('id:{self.id}','user:{self.user_id}','date:{self.date}','paid by:{self.paid_by}','amount:{self.amount}')"
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -90,7 +90,7 @@ class Payment(db.Model):
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=False)
     
     def __repr__(self):
-        return f"Payment('{self.id}','{self.user_id}','{self.date}','{self.paid_by}','{self.amount}','{self.card_id}')"
+        return f"Payment('id:{self.id}','user:{self.user_id}','date:{self.date}','paid by:{self.paid_by}','amount:{self.amount}','card:{self.card_id}')"
 
 class Purchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,5 +106,5 @@ class Purchase(db.Model):
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=True)
     
     def __repr__(self):
-        return f"Purchase('{self.id}','{self.user_id}','{self.date},'{self.method_id}','{self.card_id},'{self.amount}','{self.seller}','{self.user1_pct}')"
+        return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date},'method_id:{self.method_id}','card_id:{self.card_id},'amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}')"
 

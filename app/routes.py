@@ -4,7 +4,7 @@ from app.forms import PurchaseForm, PaymentForm, TransferForm, PurchaseQueryForm
 from app.models import User, Method, Card, Category, Subcategory, Payment, Transfer, Purchase
 from flask import escape, request, render_template, session, url_for, flash, redirect
 from flask_login import login_user, current_user, logout_user, login_required
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, func
 
 entries = []
 
@@ -55,92 +55,388 @@ def methods():
 def purchases():
     form = PurchaseQueryForm()
 
-    form.paid_by.choices = [(0,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
-    form.shared_by.choices = [(0,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    form.paid_by.choices = [(3,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    form.shared_by.choices = [(3,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
     methods = Method.query.filter_by(user_id=current_user.id).all()
-    form.method_id.choices = [(0,'Any')]+[(method.method, method.method) for method in methods]
+    form.method_id.choices = [(-1,'Any')]+[(method.id, method.method) for method in methods]
     cards = Card.query.filter_by(user_id=current_user.id).all()
-    form.card_id.choices = [(0,'Any')]+[(card.card, card.card) for card in cards]
-
-    if request.method == 'GET':
-        form.end_date.data=datetime.today().replace(day=1)
-        purchases = Purchase.query.filter_by(user_id=current_user.id).all()
-    # elif:
-    #     q_start_date = request.args.get('start_date')
-    #     q_end_date = request.args.get('end_date')
-    #     q_paid_by = request.args.get('paid_by')
-    #     q_shared_by = request.args.get('shared_by')
-    #     q_method = request.args.get('method')
-    #     q_card = request.args.get('card')
-
-    #     form.title.data = addto_category
-    #     form.start_date.data= 1
-    #     form.end_date.data= 2
-    #     form.end_date.data= 3
-    #     form.end_date.data= 4
-    #     purchases = Purchase.query.filter_by(user_id=current_user.id).all()
+    form.card_id.choices = [(-1,'Any')]+[(card.id, card.card) for card in cards]
 
 
-   
+    form_card_sums=[]
+    csum1 = 0
+    csum2 = 0
+
+    form_method_sums=[]
+    msum1 = 0
+    msum2 = 0
+
+    if not request.args: #request.method == 'GET':
+        form_start=datetime.today().date().replace(day=1)
+        form_end=datetime.today().date()
+        form_card=-1
+        form_method=-1
+        form_paid_by=3
+
+        purchases = db.session.query(Purchase).filter(and_(Purchase.user_id==current_user.id, Purchase.date>=datetime.today().date().replace(day=1))).order_by(desc(Purchase.date)).all()
+        print(payments)
+
+        for method in methods:
+            form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+            form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+            
+            if form_msum1.mySum and int(form_paid_by)!=2:
+                form_msumpaidby1 = float(form_msum1.mySum)
+            else:
+                form_msumpaidby1 = 0
+            if form_msum2.mySum and int(form_paid_by)!=1:
+                form_msumpaidby2 = float(form_msum2.mySum)
+            else:
+                form_msumpaidby2 = 0
+
+            form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+            msum1+=form_msumpaidby1
+            msum2+=form_msumpaidby2
+
+        for card in cards:
+            form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+            form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+            
+            if form_csum1.mySum and int(form_paid_by)!=2:
+                form_csumpaidby1 = float(form_csum1.mySum)
+            else:
+                form_csumpaidby1 = 0
+            if form_csum2.mySum and int(form_paid_by)!=1:
+                form_csumpaidby2 = float(form_csum2.mySum)
+            else:
+                form_csumpaidby2 = 0
+
+            form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+            csum1+=form_csumpaidby1
+            csum2+=form_csumpaidby2
+
+    else:
+        queries = [Purchase.user_id==current_user.id]
+        q_start_date = request.args.get('start_date')
+        q_end_date = request.args.get('end_date')
+        q_paid_by = request.args.get('paid_by')
+        q_card = request.args.get('card')
+        q_method = request.args.get('method')
+        form_start=datetime.strptime(q_start_date, '%Y-%m-%d').date()
+        form_end=datetime.strptime(q_end_date, '%Y-%m-%d').date()
+
+        if int(q_paid_by)!=3:
+                queries.append(Payment.paid_by==q_paid_by)
+                form_paid_by=q_paid_by
+        else:
+            form_paid_by=3
+
+
+        if int(q_method)!=-1:
+            queries.append(Payment.method_id==q_method)
+            form_method=q_method
+            
+            for method in methods:
+                if method.id == int(form_method):
+                    form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+                    form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                    
+                    if form_msum1.mySum and int(form_paid_by)!=2:
+                        form_msumpaidby1 = float(form_msum1.mySum)
+                    else:
+                        form_msumpaidby1 = 0
+                    if form_msum2.mySum and int(form_paid_by)!=1:
+                        form_msumpaidby2 = float(form_msum2.mySum)
+                    else:
+                        form_msumpaidby2 = 0
+
+                    form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+                    msum1+=form_msumpaidby1
+                    msum2+=form_msumpaidby2
+                else:
+                    form_method_sums.append([method.method,0,0])
+
+        else:
+            form_method=-1
+            for method in methods:
+                form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==1)).first()
+                form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==2)).first()
+                
+                if form_msum1.mySum and int(form_paid_by)!=2:
+                    form_msumpaidby1 = float(form_msum1.mySum)
+                else:
+                    form_msumpaidby1 = 0
+                if form_msum2.mySum and int(form_paid_by)!=1:
+                    form_msumpaidby2 = float(form_msum2.mySum)
+                else:
+                    form_msumpaidby2 = 0
+
+                form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+                msum1+=form_msumpaidby1
+                msum2+=form_msumpaidby2
+        
+        if int(q_card)!=-1:
+            queries.append(Payment.card_id==q_card)
+            form_card=q_card
+            
+            for card in cards:
+                if card.id == int(form_card):
+                    form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+                    form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                    
+                    if form_csum1.mySum and int(form_paid_by)!=2:
+                        form_csumpaidby1 = float(form_csum1.mySum)
+                    else:
+                        form_csumpaidby1 = 0
+                    if form_csum2.mySum and int(form_paid_by)!=1:
+                        form_csumpaidby2 = float(form_csum2.mySum)
+                    else:
+                        form_csumpaidby2 = 0
+
+                    form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+                    csum1+=form_csumpaidby1
+                    csum2+=form_csumpaidby2
+                else:
+                    form_card_sums.append([card.card,0,0])
+
+        else:
+            form_card=-1
+            for card in cards:
+                form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+                form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                
+                if form_csum1.mySum and int(form_paid_by)!=2:
+                    form_csumpaidby1 = float(form_csum1.mySum)
+                else:
+                    form_csumpaidby1 = 0
+                if form_csum2.mySum and int(form_paid_by)!=1:
+                    form_csumpaidby2 = float(form_csum2.mySum)
+                else:
+                    form_csumpaidby2 = 0
+
+                form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+                csum1+=form_csumpaidby1
+                csum2+=form_csumpaidby2
+
+        purchases = db.session.query(Purchase).filter(*queries, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date()).order_by(desc(Purchase.date)).all()
+
+
     if form.validate_on_submit():
 
-        purchases = Purchase.query.filter_by(user_id=current_user.id).all()
-        # NEED TO ADD A BUNCH OF FILTERS
+        criteria_start_date=form.start_date.data
+        criteria_end_date=form.end_date.data
+        criteria_paid_by=form.paid_by.data
+        criteria_card=form.card_id.data
+        criteria_method=form.method_id.data
 
-        # method = Method.query.filter_by(user_id=current_user.id, method=form.method_id.data).first()
-        # card = Card.query.filter_by(user_id=current_user.id, card=form.card_id.data).first()
-        
-        # method_used = method.id if form.paid_by.data!=0 else 0
-        # card_used = card.id if form.paid_by.data==0 else 0
-        # purchase = Purchase(date=form.date.data, amount=form.amount.data, paid_by=form.paid_by.data, method_id=method_used, card_id=card_used, seller=form.seller.data, user1_pct=100-form.share.data, notes=form.notes.data, user_id=current_user.id)
-        # db.session.add(purchase)
-        # db.session.commit()
-        # flash(f'Your purchase has been added!','success')
+        if criteria_end_date>datetime.today().date():
+            criteria_end_date=datetime.today().date()
+            flash(f'End date set to today.','danger')
 
-    return render_template('purchases.html', title='Purchases', form=form, purchases=purchases)
+        return redirect(url_for('purchases', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, method=criteria_method, card=criteria_card))
+
+
+    return render_template('purchases.html', title='Purchases', form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_card=form_card, form_method=form_method, purchases=purchases, user1=current_user.username1, user2=current_user.username2, method_sums=form_method_sums, msum1=msum1, msum2=msum2, card_sums=form_card_sums, csum1=csum1, csum2=csum2)
 
 @app.route('/transfers/', methods=['GET','POST'])
 def transfers():
     form = TransferQueryForm()    
-    form.paid_by.choices = [(0,'Any')]+[(1,f'{current_user.username1} to {current_user.username2}'),(2,f'{current_user.username2} to {current_user.username1}')]
+    form.paid_by.choices = [(3,'Any')]+[(1,f'{current_user.username1} to {current_user.username2}'),(2,f'{current_user.username2} to {current_user.username1}')]
+    
+    if not request.args: #request.method == 'GET':
+        form_start=datetime.today().date().replace(day=1)
+        form_end=datetime.today().date()
+        form_paid_by=0
+                  
+        transfers = db.session.query(Transfer).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1))).order_by(desc(Transfer.date)).all()
+        print(transfers)
+        
+        form_sum1=Transfer.query.with_entities(func.sum(Transfer.amount).label("mySum")).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==1)).first()
+        # form_sumpaidby2=db.session.query(func.sum(Transfer.amount)).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==2)).scalar()
+        form_sum2=Transfer.query.with_entities(func.sum(Transfer.amount).label("mySum")).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==2)).first()
+        # form_sumpaidby1=db.session.query(func.sum(Transfer.amount)).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==1)).scalar()
+        
 
-    if request.method == 'GET':
-        form.end_date.data=datetime.today().replace(day=1)
-        transfers = session.query(Transfer).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().replace(day=1))).order_by(desc(Transfer.date))
+        
+        if form_sum1.mySum:
+            form_sumpaidby1 = float(form_sum1.mySum)
+        else:
+            form_sumpaidby1 = 0
+        if form_sum2.mySum:
+            form_sumpaidby2 = float(form_sum2.mySum)
+        else:
+            form_sumpaidby2 = 0
+
+        print(form_sumpaidby1)
+        print(form_sumpaidby2)
+
     else:
+        print("args")
         queries = [Transfer.user_id==current_user.id]
         q_start_date = request.args.get('start_date')
         q_end_date = request.args.get('end_date')
         q_paid_by = request.args.get('paid_by')
-        if q_start_date:
-            queries.append(Transfer.date>=q_start_date)
-        if q_end_date:
-            queries.append(Transfer.date<=q_end_date)
-        if q_paid_by:
+        form_start=datetime.strptime(q_start_date, '%Y-%m-%d').date()
+        form_end=datetime.strptime(q_end_date, '%Y-%m-%d').date()
+
+        if int(q_paid_by)!=3:
             queries.append(Transfer.paid_by==q_paid_by)
+            form_paid_by=q_paid_by
+        else:
+            form_paid_by=3
+            
+        transfers = db.session.query(Transfer).filter(*queries, Transfer.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Transfer.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date()).order_by(desc(Transfer.date)).all()
         
-        transfers = session.query(Transfer).filter(*queries).order_by(desc(Transfer.date))
+        print(transfers)
+
+        form_sum1=Transfer.query.with_entities(func.sum(Transfer.amount).label("mySum")).filter(and_(*queries, Transfer.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Transfer.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Transfer.paid_by==1)).first()
+        # form_sumpaidby2=db.session.query(func.sum(Transfer.amount)).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==2)).scalar()
+        form_sum2=Transfer.query.with_entities(func.sum(Transfer.amount).label("mySum")).filter(and_(*queries, Transfer.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Transfer.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Transfer.paid_by==2)).first()
+        # form_sumpaidby1=db.session.query(func.sum(Transfer.amount)).filter(and_(Transfer.user_id==current_user.id, Transfer.date>=datetime.today().date().replace(day=1),Transfer.paid_by==1)).scalar()
+
+        if form_sum1.mySum:
+            form_sumpaidby1 = float(form_sum1.mySum)
+        else:
+            form_sumpaidby1 = 0
+        if form_sum2.mySum:
+            form_sumpaidby2 = float(form_sum2.mySum)
+        else:
+            form_sumpaidby2 = 0
+        print(form_sumpaidby1)
+        print(form_sumpaidby2)
 
     if form.validate_on_submit():
-        transfer = Transfer(date=form.date.data, paid_by=form.paid_by.data, amount=form.amount.data, notes=form.notes.data, user_id=current_user.id)
-        
-        
-    return render_template('transfers.html',title="Transfers", form=form, tansfers=transfers)
+        criteria_start_date=form.start_date.data
+        criteria_end_date=form.end_date.data
+        criteria_paid_by=form.paid_by.data
+
+        if criteria_end_date>datetime.today().date():
+            criteria_end_date=datetime.today().date()
+            flash(f'End date set to today.','danger')
+
+        return redirect(url_for('transfers', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by))
+
+    return render_template('transfers.html',title="Transfers", form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, transfers=transfers, user1=current_user.username1, user2=current_user.username2, paidby1=form_sumpaidby1, paidby2=form_sumpaidby2)
 
 @app.route('/payments/', methods=['GET','POST'])
 def payments():
     form = PaymentQueryForm()
-    form.paid_by.choices = [(0,'Any')]+[(1,current_user.username1),(2,current_user.username2)]
+    form.paid_by.choices = [(3,'Any')]+[(1,current_user.username1),(2,current_user.username2)]
     cards = Card.query.filter_by(user_id=current_user.id).all()
-    form.card_id.choices = [(0,'Any')]+[(card.card, card.card) for card in cards]
+    form.card_id.choices = [(-1,'Any')]+[(card.id, card.card) for card in cards]
+
+
+    form_card_sums=[]
+    sum1 = 0
+    sum2 = 0
+    if not request.args: #request.method == 'GET':
+        form_start=datetime.today().date().replace(day=1)
+        form_end=datetime.today().date()
+        form_card=-1
+        form_paid_by=3
+                
+        payments = db.session.query(Payment).filter(and_(Payment.user_id==current_user.id, Payment.date>=datetime.today().date().replace(day=1))).order_by(desc(Payment.date)).all()
+        print(payments)
+
+        for card in cards:
+            form_sum1=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.today().date().replace(day=1),Payment.paid_by==1)).first()
+            form_sum2=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.today().date().replace(day=1),Payment.paid_by==2)).first()
+            
+            if form_sum1.mySum and int(form_paid_by)!=2:
+                form_sumpaidby1 = float(form_sum1.mySum)
+            else:
+                form_sumpaidby1 = 0
+            if form_sum2.mySum and int(form_paid_by)!=1:
+                form_sumpaidby2 = float(form_sum2.mySum)
+            else:
+                form_sumpaidby2 = 0
+
+            form_card_sums.append([card.card,form_sumpaidby1,form_sumpaidby2])
+            sum1+=form_sumpaidby1
+            sum2+=form_sumpaidby2
+
+    else:
+        queries = [Payment.user_id==current_user.id]
+        q_start_date = request.args.get('start_date')
+        q_end_date = request.args.get('end_date')
+        q_paid_by = request.args.get('paid_by')
+        q_card = request.args.get('card')
+        form_start=datetime.strptime(q_start_date, '%Y-%m-%d').date()
+        form_end=datetime.strptime(q_end_date, '%Y-%m-%d').date()
+
+        if int(q_paid_by)!=3:
+            queries.append(Payment.paid_by==q_paid_by)
+            form_paid_by=q_paid_by
+        else:
+            form_paid_by=3
+            
+        print(q_card)    
+        if int(q_card)!=-1:
+            queries.append(Payment.card_id==q_card)
+            form_card=q_card
+            
+            for card in cards:
+                if card.id == int(form_card):
+                    form_sum1=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Payment.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Payment.paid_by==1)).first()
+                    form_sum2=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Payment.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Payment.paid_by==2)).first()
+                        
+                    if form_sum1.mySum and int(form_paid_by)!=2:
+                        form_sumpaidby1 = float(form_sum1.mySum)
+                    else:
+                        form_sumpaidby1 = 0
+                    if form_sum2.mySum and int(form_paid_by)!=1:
+                        form_sumpaidby2 = float(form_sum2.mySum)
+                    else:
+                        form_sumpaidby2 = 0
+
+                    form_card_sums.append([card.card,form_sumpaidby1,form_sumpaidby2])
+                    sum1+=form_sumpaidby1
+                    sum2+=form_sumpaidby2
+                else:
+                    form_card_sums.append([card.card,0,0])
+
+        else:
+            form_card=-1
+            for card in cards:
+                form_sum1=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Payment.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Payment.paid_by==1)).first()
+                form_sum2=Payment.query.with_entities(func.sum(Payment.amount).label("mySum")).filter(and_(Payment.user_id==current_user.id, Payment.card_id==card.id, Payment.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Payment.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Payment.paid_by==2)).first()
+                
+                if form_sum1.mySum and int(form_paid_by)!=2:
+                    form_sumpaidby1 = float(form_sum1.mySum)
+                else:
+                    form_sumpaidby1 = 0
+                if form_sum2.mySum and int(form_paid_by)!=1:
+                    form_sumpaidby2 = float(form_sum2.mySum)
+                else:
+                    form_sumpaidby2 = 0
+
+                print([card.card,form_sumpaidby1,form_sumpaidby2])
+                form_card_sums.append([card.card,form_sumpaidby1,form_sumpaidby2])
+                sum1+=form_sumpaidby1
+                sum2+=form_sumpaidby2
+
+
+        print(*queries)
+        print(form_card_sums)
+        payments = db.session.query(Payment).filter(*queries, Payment.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Payment.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date()).order_by(desc(Payment.date)).all()
+        print(payments)
 
     if form.validate_on_submit():
-        card = Card.query.filter_by(card=form.card_id.data, user_id=current_user.id).first()
-        payment = Payment(date=form.date.data, paid_by=form.paid_by.data, amount=form.amount.data, card_id=card.id, notes=form.notes.data, user_id=current_user.id)
-        db.session.add(payment)
-        db.session.commit()
-        flash(f'Your payment has been added!','success')
-    return render_template('payments.html',title="Payments", form=form)
+        criteria_start_date=form.start_date.data
+        criteria_end_date=form.end_date.data
+        criteria_paid_by=form.paid_by.data
+        criteria_card=form.card_id.data
+
+        if criteria_end_date>datetime.today().date():
+            criteria_end_date=datetime.today().date()
+            flash(f'End date set to today.','danger')
+
+        return redirect(url_for('payments', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, card=criteria_card))
+
+
+    return render_template('payments.html',title="Payments", form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_card=form_card, payments=payments, user1=current_user.username1, user2=current_user.username2, card_sums=form_card_sums, sum1=sum1, sum2=sum2)
+
+
 
 @app.route('/summary/')
 def summary():
@@ -209,19 +505,24 @@ def about():
 def new_purchase():
     form = PurchaseForm()
 
-    form.paid_by.choices = [(1,current_user.username1+'*'),(2,current_user.username2+'*'),(0,'Credit Card**')]
+    form.paid_by.choices = [(1,current_user.username1+'*'),(2,current_user.username2+'*'),(3,'Credit Card**')]
     methods = Method.query.filter_by(user_id=current_user.id).all()
-    form.method_id.choices = [(method.method, method.method) for method in methods]
+    form.method_id.choices = [(method.id, method.method) for method in methods]
     cards = Card.query.filter_by(user_id=current_user.id).all()
-    form.card_id.choices = [(card.card, card.card) for card in cards]
+    form.card_id.choices = [(card.id, card.card) for card in cards]
 
    
     if form.validate_on_submit():
-        method = Method.query.filter_by(user_id=current_user.id, method=form.method_id.data).first()
-        card = Card.query.filter_by(user_id=current_user.id, card=form.card_id.data).first()
+        method = Method.query.filter_by(user_id=current_user.id, id=form.method_id.data).first()
+        card = Card.query.filter_by(user_id=current_user.id, id=form.card_id.data).first()
         
-        method_used = method.id if form.paid_by.data!=0 else 0
-        card_used = card.id if form.paid_by.data==0 else 0
+        print(form.paid_by.data)
+        print(method)
+        print(card)
+        method_used = method.id if int(form.paid_by.data)!=3 else 0
+        card_used = card.id if int(form.paid_by.data)==3 else 0        
+        print(method_used)
+        print(card_used)
         purchase = Purchase(date=form.date.data, amount=form.amount.data, paid_by=form.paid_by.data, method_id=method_used, card_id=card_used, seller=form.seller.data, user1_pct=100-form.share.data, notes=form.notes.data, user_id=current_user.id)
         db.session.add(purchase)
         db.session.commit()
@@ -234,12 +535,15 @@ def new_purchase():
 @login_required
 def new_payment():
     form = PaymentForm()
-    form.paid_by.choices = [current_user.username1,current_user.username2]
+    form.paid_by.choices = [(1,current_user.username1),(2,current_user.username2)]
     cards = Card.query.filter_by(user_id=current_user.id).all()
-    form.card_id.choices = [(card.card, card.card) for card in cards]
+    form.card_id.choices = [(card.id, card.card) for card in cards]
 
     if form.validate_on_submit():
-        card = Card.query.filter_by(card=form.card_id.data, user_id=current_user.id).first()
+
+        print(form.card_id.data)
+        card = Card.query.filter_by(id=form.card_id.data, user_id=current_user.id).first()
+        print(card)
         payment = Payment(date=form.date.data, paid_by=form.paid_by.data, amount=form.amount.data, card_id=card.id, notes=form.notes.data, user_id=current_user.id)
         db.session.add(payment)
         db.session.commit()
@@ -300,7 +604,7 @@ def new_card():
         db.session.add(card)
         db.session.commit()
         flash(f'Card "{form.card.data}" has been added!','success')
-        return redirect(url_for('cards'))
+        return redirect(url_for('methods'))
     else:
         return render_template('add_card.html', title="Add Card", form=form)
 

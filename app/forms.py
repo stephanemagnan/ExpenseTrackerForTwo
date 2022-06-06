@@ -1,10 +1,11 @@
 from datetime import datetime
+from tracemalloc import start
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from app.models import User, Category, Subcategory, Card, Payment, Transfer, Purchase, Method
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, DateField, DecimalField, RadioField, SelectField
 from wtforms.fields import IntegerRangeField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
+from wtforms.validators import DataRequired, InputRequired, Length, Email, EqualTo, ValidationError, NumberRange
 
 class RegistrationForm(FlaskForm):
     username1 = StringField('Username 1', validators=[DataRequired(), Length(min=2, max=20)])
@@ -67,7 +68,7 @@ class PaymentForm(FlaskForm):
     date = DateField('Payment Date', default=datetime.today, validators=[DataRequired()])
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     amount = DecimalField('Amount', places=2, default=0, validators=[])
-    card_id = SelectField('Paid to Credit Card', validators=[DataRequired()])
+    card_id = SelectField('Paid to', validators=[DataRequired()])
     notes = StringField('Notes', validators=[Length(max=80)])
     submit = SubmitField('Save')
 
@@ -120,8 +121,8 @@ class MethodForm(FlaskForm):
             raise ValidationError('This method already exists!')
 
 class PurchaseQueryForm(FlaskForm):
-    start_date = DateField('Start Date', default=datetime.today, validators=[DataRequired()])
-    end_date = DateField('Purchase Date', default=datetime.today, validators=[DataRequired()])
+    start_date = DateField('Start Date', validators=[DataRequired()])
+    end_date = DateField('Purchase Date', validators=[DataRequired()])
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     shared_by = SelectField('Shared by', validators=[DataRequired()])
     method_id = SelectField('Method', validators=[DataRequired()])
@@ -130,14 +131,25 @@ class PurchaseQueryForm(FlaskForm):
     submit = SubmitField('Search')
 
 class TransferQueryForm(FlaskForm):
-    start_date = DateField('Start Date', default=datetime.today, validators=[DataRequired()])
-    end_date = DateField('End Date', default=datetime.today, validators=[DataRequired()])
-    paid_by = SelectField('Payment Direction', validators=[DataRequired()])
+    start_date = DateField('Start Date', validators=[InputRequired()])
+    end_date = DateField('End Date', validators=[InputRequired()])
+    paid_by = SelectField('Payment Direction', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Search')
 
+    def validate_start_date(self,start_date):
+        if start_date.data>self.end_date.data:
+            raise ValidationError('Start date must be before end date!')
+    #     if start_date.data>datetime.today:
+    #         raise ValidationError('Cannot be in the future!')  
+
+    # def validate_end_date(self,end_date):
+    #     if end_date.data>datetime.today:
+    #         raise ValidationError('Cannot be in the future!')          
+
+
 class PaymentQueryForm(FlaskForm):
-    start_date = DateField('Start Date', default=datetime.today, validators=[DataRequired()])
-    end_date = DateField('End Date', default=datetime.today, validators=[DataRequired()])
+    start_date = DateField('Start Date', validators=[DataRequired()])
+    end_date = DateField('End Date', validators=[DataRequired()])
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     card_id = SelectField('Paid to Credit Card', validators=[DataRequired()])
     submit = SubmitField('Search')

@@ -17,5 +17,21 @@
 
     </form>
 </div>
-    
+<div class="content-section">
+    <form method="POST" action="">
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Credit Cards</legend>
+            <p class='text-muted'>Each credit card purchase and payment must reference one of these cards:
+                <ul class="list-group">
+                    {% for card in card_list %}
+                    <li class="list-group-item list-group-item-light">{{card}}</li>
+                    {% endfor %}
+                    <a class="nav-item nav-link" href="{{ url_for('new_card') }}">New Card</a>
+                </ul>
+              </p>
+
+        </fieldset>
+
+    </form>
+</div>
 {% endblock content %}
