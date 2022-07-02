@@ -3,10 +3,64 @@
 <div class="content-section">
     <form method="POST" action="">
         <fieldset class="form-group">
-            <legend class="border-bottom mb-4">Categories</legend>
-            <p class='text-muted'>Each purchase is described by one of the following fields:
+            <legend class="border-bottom mb-4">
+                <div class="row">
+                    <div class="col">
+                        Spending Categories
+                    </div>
+                    <div class="col-4">
+                        <a href="{{ url_for('new_category') }}">Add a Category</a>
+                    </div>
+                </div>
+            </legend>
+            <p class='text-muted'>Each purchase is assigned by one of the following subcategories:</p>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <caption>List of spending categories</caption>
+                    <thead>
+                    <tr>
+                        {% for category in category_list %}
+                        <th scope="col"> {{category.category}} </th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr> 
+                            {% for category in category_list %}                
+                            <td >
+                                {% for subcategory in category.subcategories %}
+                                    {{subcategory}}<br>
+                                {% endfor %}
+                                <a href="{{ url_for('new_subcategory',category=category.category) }}">Add subcategory</a>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr>
+                            {% for category in category_list %}
+                            <th scope="col"> {{category.category}} </th>
+                            {% endfor %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr> 
+                                {% for category in category_list %}                
+                                <td >
+                                    {% for subcategory in category.subcategories %}
+                                        {{subcategory}}<br>
+                                    {% endfor %}
+                                    <a href="{{ url_for('new_subcategory',category=category.category) }}">Add subcategory</a>
+                                </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                </table>  
                 
-                
+            </div>     
+            
+            
+            {% if false %}   
                 <ul class="list-group">
                     {% for category in category_list %}
                     <li class="list-group-item list-group-item-light">{{category.category}}</li>
@@ -20,11 +74,13 @@
                         </li>
                     </ul>
                     {% endfor %}
+                    {% if false %}
                     <li class="list-group-item list-group-item-light">
                         <a href="{{ url_for('new_category') }}">New Category</a>
                     </li>
+                    {% endif %}
                 </ul>
-              </p>
+              {% endif %}
 
         </fieldset>
 

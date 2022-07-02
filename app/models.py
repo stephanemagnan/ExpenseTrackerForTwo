@@ -40,11 +40,14 @@ class Category(db.Model):
 class Subcategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     subtitle = db.Column(db.String(20),nullable=False)
+    
+    
+    subpurchases = db.relationship('Purchase',backref='subcategoryer',lazy=True)
 
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
 
     def __repr__(self):
-        return f"Subcategory('self:{self.id}','category:{self.category_id},'subtitle:{self.subtitle}'')"
+        return f"Subcategory('self:{self.id}','category:{self.category_id}:{self.subcategoryer.title},'subtitle:{self.subtitle}'')"
 
 class Method(db.Model):
     id = db.Column(db.Integer,primary_key=True)
@@ -104,7 +107,8 @@ class Purchase(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     method_id = db.Column(db.Integer, db.ForeignKey('method.id'), nullable=True)
     card_id = db.Column(db.Integer, db.ForeignKey('card.id'), nullable=True)
+    subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'), nullable=True)
     
     def __repr__(self):
-        return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date},'method_id:{self.method_id}','card_id:{self.card_id},'amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}')"
+        return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date},'method_id:{self.method_id}','card_id:{self.card_id},'amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}','paidby:{self.paid_by}','category:{self.subcategoryer.subcategoryer.id}:{self.subcategoryer.subcategoryer.title}','subcategory:{self.subcategoryer.id}:{self.subcategoryer.subtitle}')"
 

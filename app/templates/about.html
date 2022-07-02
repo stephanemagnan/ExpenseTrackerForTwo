@@ -1,4 +1,793 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Hello, About!</h1>
+<div class="content-section">
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">
+                <div class="row">
+                    <div class="col">
+                    Search for Purchases
+                    </div>
+                    <div class="col-3">
+                        <a href="{{ url_for('new_purchase') }}">Add a Purchase</a>
+                    </div>
+                </div>
+            </legend>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.start_date.label(class="form-control-label") }}
+                        {% if form.start_date.errors %}
+                            {{ form.start_date(class="form-control  is-invalid", value=form_start ) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.start_date.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.start_date(class="form-control ", value=form_start ) }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.end_date.label(class="form-control-label") }}
+                        {% if form.end_date.errors %}
+                            {{ form.end_date(class="form-control  is-invalid", value=form_end) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.end_date.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.end_date(class="form-control ", value=form_end) }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.paid_by.label(class="form-control-label") }}
+                        {% if form_paid_by !=3%}
+                            {{ form.paid_by(class="form-control ", value=form_paid_by) }}
+                        {% else %}
+                            {{ form.paid_by(class="form-control ") }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.shared_by.label(class="form-control-label") }}
+                        {% if form_shared_by%}
+                            {{ form.shared_by(class="form-control ", value=form_shared_by) }}
+                        {% else %}
+                            {{ form.shared_by(class="form-control ") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.method_id.label(class="form-control-label") }}
+                        {% if form_method!=-1 %}
+                            {{ form.method_id(class="form-control ", value=form_method) }}
+                        {% else %}
+                            {{ form.method_id(class="form-control ") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.card_id.label(class="form-control-label") }}
+                        {% if form_card!=-1 %}
+                            {{ form.card_id(class="form-control ", value=form_card) }}
+                        {% else %}
+                            {{ form.card_id(class="form-control ") }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.seller.label(class="form-control-label") }}
+        
+                        {% if form.seller.errors %}
+                            {{ form.seller(class="form-control is-invalid", value=form_seller) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.seller.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.seller(class="form-control ", value=form_seller) }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.category_id.label(class="form-control-label") }}
+                        {{ form.category_id(class="form-control ") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.subcategory_id.label(class="form-control-label") }}
+                        {{ form.subcategory_id(class="form-control ") }}
+                    </div> 
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+<div class="content-section">
+    <legend class="border-bottom mb-4">Summary of Puchases</legend>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <caption>Sum of purchases</caption>
+            <thead>
+            <tr>
+                <th scope="col"> Payment Method </th>
+                <th scope="col">{{ user1 }} Share</th>
+                <th scope="col">{{ user2 }} Share</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for method_sum, mpaidby1, mpaidby2 in method_sums %}
+                <tr> 
+                    <th scope="row" >{{ method_sum }}</th>
+                    <td>${{ '%0.2f'| format( mpaidby1 |float) }}</td>
+                    <td>${{ '%0.2f'| format( mpaidby2 |float) }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for card_sum, cpaidby1, cpaidby2 in card_sums %}
+                <tr> 
+                    <th scope="row" >{{ card_sum }}</th>
+                    <td>${{ '%0.2f'| format( cpaidby1 |float) }}</td>
+                    <td>${{ '%0.2f'| format( cpaidby2 |float) }}</td>
+                </tr>
+                {% endfor %}
+                <tr> 
+                    <th scope="row" >Total</th>
+                    <td>${{ '%0.2f'| format( csum1+csum2 |float) }}</td>
+                    <td>${{ '%0.2f'| format( csum2+csum2 |float) }}</td>
+                </tr>
+            </tbody>
+        </table>  
+    </div>
+</div>
+
+<!-- Editable table -->
+<div class="purchase-table">
+    <div class="content-section">
+    <legend class="border-bottom mb-4">List of Puchases</legend>
+    <div class="purchase-table-body">
+      <div id="table" class="table-editable">
+        <span class="table-upload float-right mb-3 mr-2">
+            <a href="#!">
+                <span class="oi oi-data-transfer-upload" title="data-transfer-upload" aria-hidden="true"></span>
+            </a>
+        </span>
+        <span class="table-add float-right mb-3 mr-2">
+            <a href="#!">
+                <span class="oi oi-plus" title="plus" aria-hidden="true"></span>
+            </a>
+        </span> 
+        <table class="table table-bordered table-responsive-md table-striped text-center">
+            <thead>
+                <tr>
+                <th class="text-center" style="display:none">Id</th>
+                <th class="text-center">Date</th>
+                <th class="text-center">Amount</th>
+                <th class="text-center">Merchant</th>
+                <th class="text-center">Category</th>
+                <th class="text-center">Subcategory</th>
+                <th class="text-center">Split</th>
+                <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <th scope="row" class="id input pt-3-half"  style="display:none">{{purchase.id}}</th>
+                <td class="date pt-3-half" >
+                    <div class="edit-locked" style="display:inline">{{ purchase.date }}</div>
+                    <input class="edit-unlocked form-control" type=date value="{{ purchase.date }}" style="display:none"/>
+                </td>
+                <td class="amount pt-3-half">
+                    <div class="edit-locked" style="display:inline">${{ '%0.2f'| format(purchase.amount|float) }} </div>
+                    <input class="edit-unlocked form-control" type=number inputmode="decimal" step="0.01" size="6" value="{{ '%0.2f'| format(purchase.amount|float) }}" style="display:none"/>
+                </td>
+                <td class="merchant pt-3-half" > 
+                    <div class="edit-locked" style="display:inline ">{{ purchase.seller }}</div>
+                    <input class="edit-unlocked form-control" type=text value="{{ purchase.seller }}" style="display:none"/> 
+                </td>
+                <td class="category pt-3-half" > 
+                    <div class="edit-locked" style="display:inline">{{ purchase.subcategoryer.subcategoryer.title }}</div>
+                    <select class="edit-unlocked form-control " style="display:none" id="category_id" name="category_id" required="" >
+                        {% for category_value,category_str in category_list %}
+                            <option value="{{ category_value }}" {% if category_value==purchase.subcategoryer.subcategoryer.id %} selected="selected"{% endif %}>{{ category_str }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="subcategory pt-3-half" > 
+                    <div class="edit-locked" style="display:inline">{{ purchase.subcategoryer.subtitle }}</div>
+                    <select class="edit-unlocked form-control" style="display:none" id="category_id" name="category_id" required="" >
+                        {% for category_value, subcategory_value,subcategory_str in subcategory_list %}
+                            {% if category_value==purchase.subcategoryer.subcategoryer.id %}
+                                <option value="{{ subcategory_value }}" {% if subcategory_value==purchase.subcategoryer.id %} selected="selected"{% endif %}>{{ subcategory_str }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>                
+                </td>
+                <td class="split pt-3-half" >
+                    <div class="edit-locked" style="display:inline">{{'%3.0f'| format( 100-purchase.user1_pct |float) }}%-{{'%3.0f'| format( purchase.user1_pct |float) }}%</div>
+                </td>
+                <td class="btns pt-3-half">
+                    <span class="table-edit" style="display:inline">
+                        <a href="#!">
+                            <span class="oi oi-pencil" title="edit" aria-hidden="true"></span>
+                        </a>
+                    </span>     
+                    <span class="table-save" style="display:none">
+                        <a href="#!" class="indigo-text">
+                            <span class="oi oi-check" title="save" aria-hidden="true"></span>
+                        </a>
+                    </span> 
+                    <span class="table-remove">
+                        <a href="#!" class="indigo-text">
+                            <span class="oi oi-trash" title="delete" aria-hidden="true"></span>
+                        </a>
+                    </span> 
+                    <span class="table-expand" style="display:inline">
+                        <a href="#!" class="indigo-text">
+                            <span class="oi oi-expand-down" title="expand" aria-hidden="true"></span>
+                        </a>
+                    </span> 
+                    <span class="table-collapse" style="display:none">
+                        <a href="#!" class="indigo-text">
+                            <span class="oi oi-collapse-up" title="collapse" aria-hidden="true"></span>
+                        </a>
+                    </span> 
+                </td>
+            </tr>
+            <tr style="display:none">
+                <th scope="row" class="id input pt-3-half"  style="display:none;">{{purchase.id}}</th>
+                <td class="paid-by pt-3-half" colspan="2">
+                    <div class="edit-locked" style="display:inline"> {% if purchase.paid_by==1 %} {{purchase.purchaser.username1}} {% elif purchase.paid_by==2 %} {{purchase.purchaser.username2}} {% else %} Card {% endif %} </div>
+                    <select class="edit-unlocked form-control " style="display:none" id="category_id" name="category_id" required="">
+                        {% for paid_by_value,paid_by_str in paid_by_list %}
+                            <option value="{{ paid_by_value }}" {% if paid_by_value==purchase.paid_by %} selected="selected"{% endif %}>{{ paid_by_str }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="method pt-3-half">
+                    <div class="edit-locked" style="display:inline"> {{purchase.purchase_method.method }}</div>
+                    <select class="edit-unlocked form-control" style="display:none" id="category_id" name="category_id" required="">
+                        {% for method_value,method_str in methods_list %}
+                            <option value="{{ method_value }}" {% if method_value==purchase.method_id %} selected="selected"{% endif %}>{{ method_str }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="card2 pt-3-half">
+                    <div class="edit-locked" style="display:inline">{{ purchase.card_used.card }}</div>
+                    <select class="edit-unlocked form-control " style="display:none" id="category_id" name="category_id" required="">
+                        {% for card_value,card_str in cards_list %}
+                            <option value="{{ card_value }}" {% if card_value==purchase.card_id %} selected="selected"{% endif %}>{{ card_str }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="notes pt-3-half"  colspan="1">
+                    <div class="edit-locked" style="display:inline"> {{ purchase.notes }} </div>
+                    <input class="edit-unlocked form-control" style="display:none " type=text value="{{ purchase.notes }}" style="display:none"/>
+                </td>
+                <td class="shared pt-3-half" colspan="2">
+                    <input class="share edit-unlocked form-control" style="display:none" id="share" max="100" min="0" name="share" required="" type="range" value={{100-purchase.user1_pct}} size="16"/>
+                </td>
+
+              </tr>
+
+            {% endfor %}
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Editable table -->
+
+  <script>
+     const $BTN = $('#export-btn'); const $EXPORT = $('#export');
+
+
+    // $tableID.on('click', '.table-remove', function() {
+      
+    //     var $row =  $(this).closest('tr');
+    //     var $nrow = $row.next()
+    //     $nrow.detach();
+    //     $(this).parents('tr').detach();
+      
+      
+    //   // NEED TO REMOVE FROM DATABASE BASED ON ID IN ROW
+    // });
+
+      
+    jQuery.fn.pop = [].pop;
+    jQuery.fn.shift = [].shift;
+    $BTN.on('click', () => {
+        const $rows =
+            $tableID.find('tr:not(:hidden)');
+        const headers = [];
+        const data = []; // Get the headers(add special header logic here)
+         $($rows.shift()).find('th:not(:empty)').each(function() {
+            headers.push($(this).text().toLowerCase());
+        }); // Turn all existing rows into a loopable array 
+        $rows.each(function() {
+            const $td = $(this).find('td');
+            const h = {}; // Use the headers from earlier to name our hash keys 
+            headers.forEach((header, i) => {
+                h[header] =
+                    $td.eq(i).text();
+            });
+            data.push(h);
+        }); // Output the result
+        $EXPORT.text(JSON.stringify(data));
+    });
+    </script>
+
+    <script>
+
+    
+        
+        const $tableID = $('#table'); 
+        const newTr = `
+            <tr>
+                <th scope="row" class="id input pt-3-half"  style="display:none">-1</th>
+                    <td class="date pt-3-half" >
+                        <div class="edit-locked" style="display:none"></div>
+                        <input class="edit-unlocked form-control" type=date value="" style="display:inline"/>
+                    </td>
+                    <td class="amount pt-3-half">
+                        <div class="edit-locked" style="display:none">$0.00 </div>
+                        <input class="edit-unlocked form-control" type=number inputmode="decimal" step="0.01" size="6" value="0.00" style="display:inline"/>
+                    </td>
+                    <td class="merchant pt-3-half" > 
+                        <div class="edit-locked" style="display:none "></div>
+                        <input class="edit-unlocked form-control" type=text value="" style="display:inline"/> 
+                    </td>
+                    <td class="category pt-3-half" > 
+                        <div class="edit-locked" style="display:none"></div>
+                        <select class="edit-unlocked form-control " style="display:inline" id="category_id" name="category_id" required="" >
+
+                        </select>
+                    </td>
+                    <td class="subcategory pt-3-half" > 
+                        <div class="edit-locked" style="display:none"></div>
+                        <select class="edit-unlocked form-control" style="display:inline" id="category_id" name="category_id" required="" >
+
+                        </select>                
+                    </td>
+                    <td class="split pt-3-half" >
+                        <div class="edit-locked" style="display:inline">50%-50%</div>
+                    </td>
+                    <td class="btns pt-3-half">
+                        <span class="table-edit" style="display:inline">
+                            <a href="#!">
+                                <span class="oi oi-pencil" title="edit" aria-hidden="true"></span>
+                            </a>
+                        </span>     
+                        <span class="table-save" style="display:none">
+                            <a href="#!" class="indigo-text">
+                                <span class="oi oi-check" title="save" aria-hidden="true"></span>
+                            </a>
+                        </span> 
+                        <span class="table-remove">
+                            <a href="#!" class="indigo-text">
+                                <span class="oi oi-trash" title="delete" aria-hidden="true"></span>
+                            </a>
+                        </span> 
+                        <span class="table-expand" style="display:inline">
+                            <a href="#!" class="indigo-text">
+                                <span class="oi oi-expand-down" title="expand" aria-hidden="true"></span>
+                            </a>
+                        </span> 
+                        <span class="table-collapse" style="display:none">
+                            <a href="#!" class="indigo-text">
+                                <span class="oi oi-collapse-up" title="collapse" aria-hidden="true"></span>
+                            </a>
+                        </span> 
+                    </td>
+                </tr>
+                <tr style="display:table-row">
+                    <th scope="row" class="id input pt-3-half"  style="display:none;">-1</th>
+                    <td class="paid-by pt-3-half" colspan="2">
+                        <div class="edit-locked" style="display:none"> </div>
+                        <select class="edit-unlocked form-control " style="display:inline" id="category_id" name="category_id" required="">
+
+                        </select>
+                    </td>
+                    <td class="method pt-3-half">
+                        <div class="edit-locked" style="display:none"> </div>
+                        <select class="edit-unlocked form-control" style="display:inline" id="category_id" name="category_id" required="">
+
+                        </select>
+                    </td>
+                    <td class="card2 pt-3-half">
+                        <div class="edit-locked" style="display:none"></div>
+                        <select class="edit-unlocked form-control " style="display:inline" id="category_id" name="category_id" required="">
+
+                        </select>
+                    </td>
+                    <td class="notes pt-3-half"  colspan="1">
+                        <div class="edit-locked" style="display:none">  </div>
+                        <input class="edit-unlocked form-control" style="display:inline " type=text value="" style="display:none"/>
+                    </td>
+                    <td class="shared pt-3-half" colspan="2">
+                        <input class="share edit-unlocked form-control" style="display:inline" id="share" max="100" min="0" name="share" required="" type="range" value=50 size="16"/>
+                    </td>
+
+                </tr>
+        `;
+
+        $('.table-add').on('click', 'a', () => {
+        // const $clone = $tableID.find('tbody tr ').last().clone(true).removeClass(' hide table - line '); 
+        //     if ($tableID.find('tbody tr ').length === 0) {
+        //     $('tbody').append(newTr);
+        // }
+        // $('tbody').append(newTr);
+        // console.log("added")
+        // $tableID.find('table').append($clone);
+        $("#table tbody").prepend(newTr);
+
+        // NOW NEED TO POPULATE ALL FIELDS:
+
+
+        //DATE (first row)
+
+        //CATEGORY LIST (first row)
+
+        //SUBCATEGORY LIST (first row)
+
+        //PAIDBY (second row)
+
+        //CARDS (second row)
+
+        //METHODS (second row)
+
+
+
+
+    });
+
+    </script>
+
+
+    <script>
+        $('table').on('click','.table-edit',function() {
+
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+
+        var $date = $row.find('td.date');
+        var $datedisp = $date.find('.edit-locked');
+        var $dateedit = $date.find('.edit-unlocked');
+        $datedisp.attr("style","display:none")
+        $dateedit.attr("style","display:inline")
+
+        var $amnt = $row.find('td.amount');
+        var $amntdisp = $amnt.find('.edit-locked');
+        var $amntedit = $amnt.find('.edit-unlocked');
+        $amntdisp.attr("style","display:none")
+        $amntedit.attr("style","display:inline")
+
+        var $merch = $row.find('td.merchant');
+        var $merchdisp = $merch.find('.edit-locked');
+        var $merchedit = $merch.find('.edit-unlocked');
+        $merchdisp.attr("style","display:none")
+        $merchedit.attr("style","display:inline")
+
+        var $cat = $row.find('td.category');
+        var $catdisp = $cat.find('.edit-locked');
+        var $catedit = $cat.find('.edit-unlocked');
+        $catdisp.attr("style","display:none")
+        $catedit.attr("style","display:inline")
+
+        var $subcat = $row.find('td.subcategory');
+        var $subcatdisp = $subcat.find('.edit-locked');
+        var $subcatedit = $subcat.find('.edit-unlocked');
+        $subcatdisp.attr("style","display:none")
+        $subcatedit.attr("style","display:inline")
+
+        // var $splt = $row.find('td.split');
+        // var $spltdisp = $splt.find('.edit-locked');
+        // var $spltedit = $splt.find('.edit-unlocked');
+        // $spltdisp.attr("style","display:none")
+        // $spltedit.attr("style","display:inline")
+
+        var $btns = $row.find('td.btns');
+        var $edit = $btns.find('.table-edit');
+        var $save = $btns.find('.table-save');
+        
+        console.log($btns);
+        console.log($edit);
+        console.log($save);
+
+        $edit.attr("style","display:none")
+        $save.attr("style","display:inline")
+
+
+        var $nrow = $row.next()
+
+        var $paidby = $nrow.find('td.paid-by');
+        var $paidbydisp = $paidby.find('.edit-locked');
+        var $paidbyedit = $paidby.find('.edit-unlocked');
+        $paidbydisp.attr("style","display:none")
+        $paidbyedit.attr("style","display:inline")
+
+        var $meth = $nrow.find('td.method');
+        var $methdisp = $meth.find('.edit-locked');
+        var $methedit = $meth.find('.edit-unlocked');
+        $methdisp.attr("style","display:none")
+        $methedit.attr("style","display:inline")
+
+        var $crd = $nrow.find('td.card2');
+        var $crddisp = $crd.find('.edit-locked');
+        var $crdedit = $crd.find('.edit-unlocked');
+        $crddisp.attr("style","display:none")
+        $crdedit.attr("style","display:inline")
+
+        var $share = $nrow.find('td.shared');
+        //var $sharedisp = $share.find('.edit-locked');
+        var $shareedit = $share.find('.edit-unlocked');
+        //$sharedisp.attr("style","display:none")
+        $shareedit.attr("style","display:inline")
+
+        var $notes = $nrow.find('td.notes');
+        var $notedisp = $notes.find('.edit-locked');
+        var $noteedit = $notes.find('.edit-unlocked');
+        $notedisp.attr("style","display:none")
+        $noteedit.attr("style","display:inline")
+
+        });
+    </script>
+
+<script>
+    $('table').on('click','.table-save',function() {
+
+    var $btn = $(this);
+    var $row = $btn.closest('tr');
+
+    var $idtag = $row.find('th.id');
+    var $purid = $idtag.text()
+
+    var $date = $row.find('td.date');
+    var $datedisp = $date.find('.edit-locked');
+    var $dateedit = $date.find('.edit-unlocked');
+    $datedisp.attr("style","display:inline")
+    $dateedit.attr("style","display:none")
+    $datedisp.text($dateedit.val())
+
+
+    var $amnt = $row.find('td.amount');
+    var $amntdisp = $amnt.find('.edit-locked');
+    var $amntedit = $amnt.find('.edit-unlocked');
+    $amntdisp.attr("style","display:inline")
+    $amntedit.attr("style","display:none")
+    $amntdisp.text('$'+$amntedit.val())
+
+    var $merch = $row.find('td.merchant');
+    var $merchdisp = $merch.find('.edit-locked');
+    var $merchedit = $merch.find('.edit-unlocked');
+    $merchdisp.attr("style","display:inline")
+    $merchedit.attr("style","display:none")
+    $merchdisp.text($merchedit.val())
+
+    var $cat = $row.find('td.category');
+    var $catdisp = $cat.find('.edit-locked');
+    var $catedit = $cat.find('.edit-unlocked');
+    $catdisp.attr("style","display:inline")
+    $catedit.attr("style","display:none")
+    $catdisp.text($catedit.find('option:selected').text())
+
+    var $subcat = $row.find('td.subcategory');
+    var $subcatdisp = $subcat.find('.edit-locked');
+    var $subcatedit = $subcat.find('.edit-unlocked');
+    $subcatdisp.attr("style","display:inline")
+    $subcatedit.attr("style","display:none")
+    $subcatdisp.text($subcatedit.find('option:selected').text())
+
+    var $btns = $row.find('td.btns');
+    var $edit = $btns.find('.table-edit');
+    var $save = $btns.find('.table-save');
+    
+    $edit.attr("style","display:inline")
+    $save.attr("style","display:none")
+
+    var $nrow = $row.next()
+
+    var $paidby = $nrow.find('td.paid-by');
+    var $paidbydisp = $paidby.find('.edit-locked');
+    var $paidbyedit = $paidby.find('.edit-unlocked');
+    $paidbydisp.attr("style","display:inline")
+    $paidbyedit.attr("style","display:none")
+    $paidbydisp.text($paidbyedit.find('option:selected').text())
+
+    var $meth = $nrow.find('td.method');
+    var $methdisp = $meth.find('.edit-locked');
+    var $methedit = $meth.find('.edit-unlocked');
+    $methdisp.attr("style","display:inline")
+    $methedit.attr("style","display:none")
+    $methdisp.text($methedit.find('option:selected').text())
+
+    var $crd = $nrow.find('td.card2');
+    var $crddisp = $crd.find('.edit-locked');
+    var $crdedit = $crd.find('.edit-unlocked');
+    $crddisp.attr("style","display:inline")
+    $crdedit.attr("style","display:none")
+    $crddisp.text($crdedit.find('option:selected').text())
+
+
+    var $share = $nrow.find('td.shared');
+    var $shareedit = $share.find('.edit-unlocked');
+    $shareedit.attr("style","display:none")
+
+    var $notes = $nrow.find('td.notes');
+    var $notedisp = $notes.find('.edit-locked');
+    var $noteedit = $notes.find('.edit-unlocked');
+    $notedisp.attr("style","display:inline")
+    $noteedit.attr("style","display:none")
+    $notedisp.text($noteedit.val())
+
+
+
+    $.ajax({
+            type: "GET",
+            url: "/db/savepurchase/",
+            data: {
+            purchase_id:$purid, 
+            date:$dateedit.val(), 
+            amount:$amntedit.val(), 
+            merchant:$merchedit.val(), 
+            cat_id:$catedit.find('option:selected').val(), 
+            subcat_id:$subcatedit.find('option:selected').val(), 
+            split:$shareedit.val(), 
+            paid_by:$paidbyedit.find('option:selected').val(), 
+            method:$methedit.find('option:selected').val(), 
+            card:$crdedit.find('option:selected').val(), 
+            note:$noteedit.val()
+            },
+            success: function(msg) {
+                console.log(msg);
+            }
+        });
+    });
+</script>
+
+<script>
+    $('table').on('click','.table-remove',function() {
+
+    var $btn = $(this);
+    var $row = $btn.closest('tr');
+
+    var $idtag = $row.find('th.id');
+    var $purid = $idtag.text()
+
+
+
+    $.ajax({
+            type: "GET",
+            url: "/db/removepurchase/",
+            data: {
+            purchase_id:$purid
+            },
+            success: function(msg) {
+                console.log(msg);
+            }
+        });
+    });
+</script>
+
+<script>
+    $('table').on('click','.table-expand',function() {
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        var $nrow = $row.next()
+
+        
+        var $btns = $row.find('td.btns');
+        var $exp = $btns.find('.table-expand');
+        $exp.attr("style","display:none")
+        var $colla = $btns.find('.table-collapse');
+        $colla.attr("style","display:inline")
+
+        $nrow.attr("style","display:table-row")
+
+    });
+</script>
+
+<script>
+    $('table').on('click','.table-collapse',function() {
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        var $nrow = $row.next()
+
+        
+        var $btns = $row.find('td.btns');
+        var $exp = $btns.find('.table-expand');
+        $exp.attr("style","display:inline");
+        var $colla = $btns.find('.table-collapse');
+        $colla.attr("style","display:none");
+        
+        $nrow.attr("style","display:none");
+    });
+</script>
+
+
+<script>
+    $('table').on('input','.share',function() {
+        var this_val = $(this).val();
+        var $btn = $(this);
+        var $nrow = $btn.closest('tr');
+        var $row = $nrow.prev();
+        // console.log(this_val);
+
+        var $splt = $row.find('td.split');
+        var $spltdisp = $splt.find('.edit-locked');
+        $spltdisp.html(String(100-this_val)+"%-"+String(this_val)+"%");
+    
+    });
+</script>
+
+
+<script>
+    $('table').on('change','.category',function() {
+        console.log('changed');
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        var $nrow = $row.next()
+
+        var $catid = $btn.find('.edit-unlocked').val();
+        var $idtag = $row.find('th.id');
+        var $purid = $idtag.text()
+        
+        var $subbtns = $row.find('td.subcategory');
+        var $subcats = $subbtns.find('.edit-unlocked');
+
+        $.ajax({
+            type: "GET",
+            url: "/subcats/",
+            data: {
+            cat_id: $catid, purchase_id: $purid
+            },
+            success: function(msg) {
+                console.log(msg);
+                $subcats
+                .find('option')
+                .remove()
+                .end()
+                .append(msg)
+            }
+        });
+
+    });
+</script>
+
+<script>
+    $('table').on('click','.subcategory',function() {
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        var $nrow = $row.next()
+
+        
+    });
+</script>
+
 {% endblock content %}

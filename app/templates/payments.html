@@ -4,7 +4,16 @@
     <form method="POST" action="">
         {{ form.hidden_tag() }}
         <fieldset class="form-group">
-            <legend class="border-bottom mb-4">Search for Payments</legend>
+            <legend class="border-bottom mb-4">
+                <div class="row">
+                    <div class="col">
+                    Search for Payments
+                    </div>
+                    <div class="col-3">
+                        <a href="{{ url_for('new_payment') }}">Add a Payment</a>
+                    </div>
+                </div>
+            </legend>
             <div class="form-row">
                 <div class="col">
                     <div class="form-group">
@@ -66,7 +75,7 @@
         <caption>Totals of payments</caption>
         <thead>
           <tr>
-            <th scope="col"> </th>
+            <th scope="col">Indirect Payment Method </th>
             <th scope="col">{{ user1 }}</th>
             <th scope="col">{{ user2 }}</th>
           </tr>
@@ -74,13 +83,13 @@
         <tbody>
             {% for card_sum, paidby1, paidby2 in card_sums %}
             <tr> 
-                <th scope="row" >{{ card_sum }}</th>
+                <td scope="row" >{{ card_sum }}</td>
                 <td>${{ '%0.2f'| format( paidby1 |float) }}</td>
                 <td>${{ '%0.2f'| format( paidby2 |float) }}</td>
             </tr>
             {% endfor %}
             <tr> 
-                <th scope="row" >Total</th>
+                <td scope="row" >Total</td>
                 <td>${{ '%0.2f'| format( sum1 |float) }}</td>
                 <td>${{ '%0.2f'| format( sum2 |float) }}</td>
             </tr>

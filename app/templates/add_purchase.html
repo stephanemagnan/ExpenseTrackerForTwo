@@ -77,6 +77,20 @@
                     {{ form.seller(class="form-control form-control-lg") }}
                 {% endif %}
             </div>
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.category_id.label(class="form-control-label") }}
+                        {{ form.category_id(class="form-control form-control-lg") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.subcategory_id.label(class="form-control-label") }}
+                        {{ form.subcategory_id(class="form-control form-control-lg") }}
+                    </div> 
+                </div>
+            </div>
             <div class="form-group">
                 {{ form.share.label(class="form-control-label") }}
                 <div class="input-group mb-2">
@@ -84,13 +98,13 @@
                         <div class="input-group-text">{{ user1 }}</div>
                     </div>
                     <div class="input-group-append">
-                        <output class="input-group-text" for="share" id="share1">{{ 100-form.share.data }}%</output>
+                        <output class="input-group-text" for="share" id="share1">{% if 100-form.share.data<100 %} &nbsp; {% endif %} {% if 100-form.share.data<10 %} &nbsp; {% endif %} {{ 100-form.share.data }}%</output>
                     </div>
                     &nbsp;&nbsp;&nbsp;
                     {{ form.share(class="form-control form-control-lg", oninput="outputUpdate(value)") }}
                     &nbsp;&nbsp;&nbsp;
                     <div class="input-group-prepend">
-                        <output class="input-group-text" id="share2">{{ form.share.data }} %</output>
+                        <output class="input-group-text" id="share2">{% if form.share.data<100 %} &nbsp; {% endif %} {% if form.share.data<10 %} &nbsp; {% endif %}{{ form.share.data }} %</output>
                     </div> 
                     <div class="input-group-append">
                         <div class="input-group-text">{{ user2 }}</div>
@@ -117,4 +131,5 @@
         </div>
     </form>
 </div>
+
 {% endblock content %}

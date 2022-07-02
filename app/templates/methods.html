@@ -3,15 +3,44 @@
 <div class="content-section">
     <form method="POST" action="">
         <fieldset class="form-group">
-            <legend class="border-bottom mb-4">Payment Methods</legend>
-            <p class='text-muted'>Each purchase and payment must reference one of these methods:
+            <legend class="border-bottom mb-4">
+                <div class="row">
+                    <div class="col">
+                        Direct Payment Accounts
+                    </div>
+                    <div class="col-4">
+                        <a href="{{ url_for('new_method') }}">Add a direct account</a>
+                    </div>
+                </div>
+            </legend>
+            <p class='text-muted'>Each purchase is automatically considered a payment by the payer (e.g., eTransfer, Cash):</p>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <caption>List of direct payment methods</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col"> Direct Payment Method </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for method in method_list %}
+                        <tr> 
+                            <td >{{ method }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>  
+            </div>
+            {% if false %}
                 <ul class="list-group">
                     {% for method in method_list %}
                     <li class="list-group-item list-group-item-light">{{method}}</li>
                     {% endfor %}
+                    {% if false %}
                     <a class="nav-item nav-link" href="{{ url_for('new_method') }}">New Method</a>
+                    {% endif %}
                 </ul>
-              </p>
+            {% endif %}
 
         </fieldset>
 
@@ -20,15 +49,45 @@
 <div class="content-section">
     <form method="POST" action="">
         <fieldset class="form-group">
-            <legend class="border-bottom mb-4">Credit Cards</legend>
-            <p class='text-muted'>Each credit card purchase and payment must reference one of these cards:
-                <ul class="list-group">
-                    {% for card in card_list %}
-                    <li class="list-group-item list-group-item-light">{{card}}</li>
-                    {% endfor %}
-                    <a class="nav-item nav-link" href="{{ url_for('new_card') }}">New Card</a>
-                </ul>
-              </p>
+            <legend class="border-bottom mb-4">
+                <div class="row">
+                    <div class="col">
+                        Indirect Payment Accounts
+                    </div>
+                    <div class="col-4">
+                        <a href="{{ url_for('new_card') }}">Add an indirect account</a>
+                    </div>
+                </div>
+            </legend>
+            <p class='text-muted'>You only get credit for purchases using this account through Payments (e.g., credit cards):</p>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <caption>List of indirect payment methods</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col"> Indirect Payment Methods </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for card in card_list %}
+                        <tr> 
+                            <td >{{ card }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>  
+            </div>
+
+            {% if false %}
+            <ul class="list-group">
+                {% for card in card_list %}
+                <li class="list-group-item list-group-item-light">{{card}}</li>
+                {% endfor %}
+                {% if false %}
+                <a class="nav-item nav-link" href="{{ url_for('new_card') }}">New Method</a>
+                {% endif %}
+            </ul>
+            {% endif %}
 
         </fieldset>
 

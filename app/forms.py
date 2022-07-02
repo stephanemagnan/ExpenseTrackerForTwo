@@ -54,6 +54,8 @@ class PurchaseForm(FlaskForm):
     amount = DecimalField('Amount', places=2, default=0, validators=[])
     share = IntegerRangeField('Share', default=50, validators=[DataRequired(),NumberRange(min=0,max=100)])
     seller = StringField('Merchant', validators=[DataRequired(),Length(max=80)])
+    category_id = SelectField('Category', validators=[DataRequired()])
+    subcategory_id = SelectField('Subcategory', validators=[DataRequired()])
     notes = StringField('Notes', validators=[Length(max=80)])
     submit = SubmitField('Save')
 
@@ -126,9 +128,15 @@ class PurchaseQueryForm(FlaskForm):
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     shared_by = SelectField('Shared by', validators=[DataRequired()])
     method_id = SelectField('Method', validators=[DataRequired()])
+    category_id = SelectField('Category', validators=[DataRequired()])
+    subcategory_id = SelectField('Subcategory', validators=[DataRequired()])
     card_id = SelectField('Credit Card', validators=[DataRequired()])
-    seller = StringField('Merchant', validators=[DataRequired(),Length(max=80)])
+    seller = StringField('Merchant', validators=[Length(max=80)])
     submit = SubmitField('Search')
+
+    def validate_start_date(self,start_date):
+        if start_date.data>self.end_date.data:
+            raise ValidationError('Start date must be before end date!')
 
 class TransferQueryForm(FlaskForm):
     start_date = DateField('Start Date', validators=[InputRequired()])
@@ -153,3 +161,7 @@ class PaymentQueryForm(FlaskForm):
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     card_id = SelectField('Paid to Credit Card', validators=[DataRequired()])
     submit = SubmitField('Search')
+
+    def validate_start_date(self,start_date):
+        if start_date.data>self.end_date.data:
+            raise ValidationError('Start date must be before end date!')

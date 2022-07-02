@@ -2,57 +2,101 @@ from datetime import datetime
 from app import app, db, bcrypt
 from app.forms import PurchaseForm, PaymentForm, TransferForm, PurchaseQueryForm, PaymentQueryForm, TransferQueryForm, CardForm, CategoryForm, SubcategoryForm,RegistrationForm, LoginForm, UpdateAccountForm, MethodForm
 from app.models import User, Method, Card, Category, Subcategory, Payment, Transfer, Purchase
-from flask import escape, request, render_template, session, url_for, flash, redirect
+from flask import escape, request, render_template, session, url_for, flash, redirect, send_from_directory
 from flask_login import login_user, current_user, logout_user, login_required
 from sqlalchemy import and_, desc, func
 
 entries = []
+
+@app.route('/db/removepurchase/', methods=['GET'])
+def removePuchase():
+    
+    if request.args: #request.method == 'GET':
+        this_purchase_id = int(request.args.get('purchase_id'))
+
+        purchase = Purchase.query.filter_by(id=this_purchase_id).first()
+
+        db.session.delete(purchase)
+        db.session.commit()
+        
+        return "OK"
+
+@app.route('/db/savepurchase/', methods=['GET'])
+def savePuchase():
+    
+    if request.args: #request.method == 'GET':
+        this_purchase_id = int(request.args.get('purchase_id'))
+        this_date = datetime.strptime(request.args.get('date'), '%Y-%m-%d').date()
+        this_amount = float(request.args.get('amount'))
+        this_merchant = request.args.get('merchant')
+        this_category_id = int(request.args.get('cat_id'))
+        this_subcategory_id = int(request.args.get('subcat_id'))
+        this_split = 100-float(request.args.get('split'))
+        this_paidby = int(request.args.get('paid_by'))
+        this_method = int(request.args.get('method'))
+        this_card = int(request.args.get('card'))
+        this_note = request.args.get('note')
+
+        if this_purchase_id<=0:
+            purchase = Purchase(date=this_date, amount=this_amount, paid_by=this_paidby, method_id=this_method, card_id=this_card, seller=this_merchant, user1_pct=100-this_split, subcategory_id=this_subcategory_id ,notes=this_note, user_id=current_user.id)
+            db.session.add(purchase)
+        else:
+            purchase = Purchase.query.filter_by(id=this_purchase_id).first()
+            purchase.date=this_date
+            purchase.amount=this_amount
+            purchase.seller=this_merchant
+            purchase.paid_by=this_paidby
+            purchase.user1_pct=100-this_split
+            purchase.notes=this_note
+            purchase.method_id=this_method
+            purchase.card_id=this_card
+            purchase.subcategory_id=this_subcategory_id
+       
+        print(purchase)
+
+        db.session.commit()
+
+        return "OK"
+
+
+@app.route('/subcats/', methods=['GET'])
+def subcategoryOptions():
+    
+    if request.args: #request.method == 'GET':
+        category_id = request.args.get('cat_id')
+        purchase_id = request.args.get('purchase_id')
+        
+        purchase = Purchase.query.filter_by(id=purchase_id).first()
+        subcategories = Subcategory.query.filter_by(category_id=category_id).all()
+        opt_string = ''
+        for this_subcategory in subcategories:
+            opt_string+='<option value="'
+            opt_string+= str(this_subcategory.id)
+            opt_string+='"'
+            if category_id==purchase.subcategoryer.subcategoryer.id and this_subcategory.id==purchase.subcategoryer.id:
+                opt_string+=' selected="selected '
+            opt_string+='>'
+            opt_string+=this_subcategory.subtitle
+            opt_string+='</option> '
+        
+        return opt_string
+
+    else:
+        return ''
+
+
+
+
+
+
 
 @app.route('/')
 @app.route('/home')
 def home():
     return render_template('home.html')
 
-class categorytree:
-    def __init__(self,category):
-        self.category=category
-        self.subcategories=[]
-    
-    def add_subcategory(self,subcategory):
-        self.subcategories.append(subcategory)
-
-@app.route('/categories/')
-def categories():
-    category_list = []
-    user_categories = Category.query.filter_by(user_id=current_user.id).all()
-    for user_category in user_categories:
-        current_category = categorytree(user_category.title)
-        user_subcategories = Subcategory.query.filter_by(category_id=user_category.id).all()
-        for user_subcategory in user_subcategories:
-            current_category.add_subcategory(user_subcategory.subtitle)
-        category_list.append(current_category)  
-    return render_template('categories.html',title="Categories",category_list=category_list) 
-
-@app.route('/cards/')
-def cards():
-    card_list = []
-    user_cards = Card.query.filter_by(user_id=current_user.id).all()
-    for user_card in user_cards:
-        card_list.append(user_card.card)    
-
-    return render_template('cards.html',title="Cards",card_list=card_list)
-
-@app.route('/methods/')
-def methods():
-    method_list = []
-    user_methods = Method.query.filter_by(user_id=current_user.id).all()
-    for user_method in user_methods:
-        method_list.append(user_method.method)    
-
-    return render_template('methods.html',title="Methods",method_list=method_list)    
-
-@app.route('/purchases/', methods=['GET','POST'])
-def purchases():
+@app.route('/about/')
+def about():
     form = PurchaseQueryForm()
 
     form.paid_by.choices = [(3,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
@@ -61,6 +105,22 @@ def purchases():
     form.method_id.choices = [(-1,'Any')]+[(method.id, method.method) for method in methods]
     cards = Card.query.filter_by(user_id=current_user.id).all()
     form.card_id.choices = [(-1,'Any')]+[(card.id, card.card) for card in cards]
+
+    paid_by_list = [(3,'Card')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    methods_list = [(-1,'None')]+[(method.id, method.method) for method in methods]
+    cards_list = [(-1,'None')]+[(card.id, card.card) for card in cards]
+
+
+    category_list = []
+    subcategory_list = []
+    user_categories = Category.query.filter_by(user_id=current_user.id).all()
+    for user_category in user_categories:
+        # current_category = categorytree(user_category.title)
+        user_subcategories = Subcategory.query.filter_by(category_id=user_category.id).all()
+        for user_subcategory in user_subcategories:
+            subcategory_list.append((user_category.id,user_subcategory.id,user_subcategory.subtitle))
+        category_list.append((user_category.id,user_category.title))  
+
 
 
     form_card_sums=[]
@@ -77,6 +137,8 @@ def purchases():
         form_card=-1
         form_method=-1
         form_paid_by=3
+        form_shared_by=3
+        form_seller=''
 
         purchases = db.session.query(Purchase).filter(and_(Purchase.user_id==current_user.id, Purchase.date>=datetime.today().date().replace(day=1))).order_by(desc(Purchase.date)).all()
         print(payments)
@@ -120,26 +182,40 @@ def purchases():
         q_start_date = request.args.get('start_date')
         q_end_date = request.args.get('end_date')
         q_paid_by = request.args.get('paid_by')
+        q_shared_by = request.args.get('shared_by')
         q_card = request.args.get('card')
         q_method = request.args.get('method')
+        q_seller = request.args.get('seller')
+        if q_seller=='*':
+            q_seller = ''
         form_start=datetime.strptime(q_start_date, '%Y-%m-%d').date()
         form_end=datetime.strptime(q_end_date, '%Y-%m-%d').date()
+        form_seller=q_seller
 
         if int(q_paid_by)!=3:
-                queries.append(Payment.paid_by==q_paid_by)
-                form_paid_by=q_paid_by
+            queries.append(Purchase.paid_by==q_paid_by)
+            form_paid_by=q_paid_by
         else:
             form_paid_by=3
 
+        if int(q_shared_by)==1:
+            queries.append(Purchase.user1_pct<=99)
+            form_shared_by=q_shared_by
+        elif int(q_shared_by)==2:
+            queries.append(Purchase.user1_pct>=1)
+            form_shared_by=q_shared_by
+        else: 
+            form_shared_by=3
+
 
         if int(q_method)!=-1:
-            queries.append(Payment.method_id==q_method)
+            queries.append(Purchase.method_id==q_method)
             form_method=q_method
             
             for method in methods:
                 if method.id == int(form_method):
-                    form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
-                    form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                    form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                    form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
                     
                     if form_msum1.mySum and int(form_paid_by)!=2:
                         form_msumpaidby1 = float(form_msum1.mySum)
@@ -159,8 +235,8 @@ def purchases():
         else:
             form_method=-1
             for method in methods:
-                form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==1)).first()
-                form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==2)).first()
+                form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
                 
                 if form_msum1.mySum and int(form_paid_by)!=2:
                     form_msumpaidby1 = float(form_msum1.mySum)
@@ -176,13 +252,13 @@ def purchases():
                 msum2+=form_msumpaidby2
         
         if int(q_card)!=-1:
-            queries.append(Payment.card_id==q_card)
+            queries.append(Purchase.card_id==q_card)
             form_card=q_card
             
             for card in cards:
                 if card.id == int(form_card):
-                    form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
-                    form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                    form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                    form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
                     
                     if form_csum1.mySum and int(form_paid_by)!=2:
                         form_csumpaidby1 = float(form_csum1.mySum)
@@ -202,8 +278,8 @@ def purchases():
         else:
             form_card=-1
             for card in cards:
-                form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
-                form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+                form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
                 
                 if form_csum1.mySum and int(form_paid_by)!=2:
                     form_csumpaidby1 = float(form_csum1.mySum)
@@ -218,25 +294,321 @@ def purchases():
                 csum1+=form_csumpaidby1
                 csum2+=form_csumpaidby2
 
-        purchases = db.session.query(Purchase).filter(*queries, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date()).order_by(desc(Purchase.date)).all()
+        purchases = db.session.query(Purchase).filter(*queries, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.seller.contains(form_seller)).order_by(desc(Purchase.date)).all()
 
 
     if form.validate_on_submit():
-
+        print("purchases validated")
         criteria_start_date=form.start_date.data
         criteria_end_date=form.end_date.data
         criteria_paid_by=form.paid_by.data
+        criteria_shared_by=form.shared_by.data
         criteria_card=form.card_id.data
         criteria_method=form.method_id.data
+        if form.seller.data == "":
+            criteria_seller='*'
+        else:    
+            criteria_seller=form.seller.data
 
         if criteria_end_date>datetime.today().date():
             criteria_end_date=datetime.today().date()
             flash(f'End date set to today.','danger')
 
-        return redirect(url_for('purchases', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, method=criteria_method, card=criteria_card))
+        print(criteria_start_date)
+        print(criteria_end_date)
+        print(criteria_paid_by)
+        print(criteria_card)
+        print(criteria_method)
+        print(criteria_seller)
+        print(criteria_shared_by)
+
+        return redirect(url_for('about', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, shared_by=criteria_shared_by, method=criteria_method, card=criteria_card, seller=criteria_seller))
+
+    print(form_start)
+    print(form_end)
+    print(form_paid_by)
+    print(form_seller)
+    print(form_card)
+    print(form_method)
+    print(form_shared_by)
+
+    print(purchases)
+
+    return render_template('about.html', title='About', form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_shared_by=form_shared_by, form_seller=form_seller, form_card=form_card, form_method=form_method, purchases=purchases, user1=current_user.username1, user2=current_user.username2, method_sums=form_method_sums, msum1=msum1, msum2=msum2, card_sums=form_card_sums, csum1=csum1, csum2=csum2, paid_by_list=paid_by_list,methods_list=methods_list,cards_list=cards_list, category_list=category_list, subcategory_list=subcategory_list)
+
+    
+    #return render_template('about.html', title="About")
+
+class categorytree:
+    def __init__(self,category):
+        self.category=category
+        self.subcategories=[]
+    
+    def add_subcategory(self,subcategory):
+        self.subcategories.append(subcategory)
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/categories/')
+def categories():
+    category_list = []
+    user_categories = Category.query.filter_by(user_id=current_user.id).all()
+    for user_category in user_categories:
+        current_category = categorytree(user_category.title)
+        user_subcategories = Subcategory.query.filter_by(category_id=user_category.id).all()
+        for user_subcategory in user_subcategories:
+            current_category.add_subcategory(user_subcategory.subtitle)
+        category_list.append(current_category)  
+    return render_template('categories.html',title="Categories",category_list=category_list) 
+
+@app.route('/cards/')
+def cards():
+    card_list = []
+    user_cards = Card.query.filter_by(user_id=current_user.id).all()
+    for user_card in user_cards:
+        card_list.append(user_card.card)    
+
+    return render_template('cards.html',title="Cards",card_list=card_list)
+
+@app.route('/methods/')
+def methods():
+    method_list = []
+    user_methods = Method.query.filter_by(user_id=current_user.id).all()
+    for user_method in user_methods:
+        method_list.append(user_method.method)   
+
+    card_list = []
+    user_cards = Card.query.filter_by(user_id=current_user.id).all()
+    for user_card in user_cards:
+        card_list.append(user_card.card)    
+
+    return render_template('methods.html',title="Methods",method_list=method_list,card_list=card_list)    
+
+@app.route('/purchases/', methods=['GET','POST'])
+def purchases():
+    form = PurchaseQueryForm()
+
+    form.paid_by.choices = [(3,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    form.shared_by.choices = [(3,'Any')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    methods = Method.query.filter_by(user_id=current_user.id).all()
+    form.method_id.choices = [(-1,'Any')]+[(method.id, method.method) for method in methods]
+    cards = Card.query.filter_by(user_id=current_user.id).all()
+    form.card_id.choices = [(-1,'Any')]+[(card.id, card.card) for card in cards]
 
 
-    return render_template('purchases.html', title='Purchases', form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_card=form_card, form_method=form_method, purchases=purchases, user1=current_user.username1, user2=current_user.username2, method_sums=form_method_sums, msum1=msum1, msum2=msum2, card_sums=form_card_sums, csum1=csum1, csum2=csum2)
+    form_card_sums=[]
+    csum1 = 0
+    csum2 = 0
+
+    form_method_sums=[]
+    msum1 = 0
+    msum2 = 0
+
+    if not request.args: #request.method == 'GET':
+        form_start=datetime.today().date().replace(day=1)
+        form_end=datetime.today().date()
+        form_card=-1
+        form_method=-1
+        form_paid_by=3
+        form_shared_by=3
+        form_seller=''
+
+        purchases = db.session.query(Purchase).filter(and_(Purchase.user_id==current_user.id, Purchase.date>=datetime.today().date().replace(day=1))).order_by(desc(Purchase.date)).all()
+        print(payments)
+
+        for method in methods:
+            form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+            form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+            
+            if form_msum1.mySum and int(form_paid_by)!=2:
+                form_msumpaidby1 = float(form_msum1.mySum)
+            else:
+                form_msumpaidby1 = 0
+            if form_msum2.mySum and int(form_paid_by)!=1:
+                form_msumpaidby2 = float(form_msum2.mySum)
+            else:
+                form_msumpaidby2 = 0
+
+            form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+            msum1+=form_msumpaidby1
+            msum2+=form_msumpaidby2
+
+        for card in cards:
+            form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
+            form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2)).first()
+            
+            if form_csum1.mySum and int(form_paid_by)!=2:
+                form_csumpaidby1 = float(form_csum1.mySum)
+            else:
+                form_csumpaidby1 = 0
+            if form_csum2.mySum and int(form_paid_by)!=1:
+                form_csumpaidby2 = float(form_csum2.mySum)
+            else:
+                form_csumpaidby2 = 0
+
+            form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+            csum1+=form_csumpaidby1
+            csum2+=form_csumpaidby2
+
+    else:
+        queries = [Purchase.user_id==current_user.id]
+        q_start_date = request.args.get('start_date')
+        q_end_date = request.args.get('end_date')
+        q_paid_by = request.args.get('paid_by')
+        q_shared_by = request.args.get('shared_by')
+        q_card = request.args.get('card')
+        q_method = request.args.get('method')
+        q_seller = request.args.get('seller')
+        if q_seller=='*':
+            q_seller = ''
+        form_start=datetime.strptime(q_start_date, '%Y-%m-%d').date()
+        form_end=datetime.strptime(q_end_date, '%Y-%m-%d').date()
+        form_seller=q_seller
+
+        if int(q_paid_by)!=3:
+            queries.append(Purchase.paid_by==q_paid_by)
+            form_paid_by=q_paid_by
+        else:
+            form_paid_by=3
+
+        if int(q_shared_by)==1:
+            queries.append(Purchase.user1_pct<=99)
+            form_shared_by=q_shared_by
+        elif int(q_shared_by)==2:
+            queries.append(Purchase.user1_pct>=1)
+            form_shared_by=q_shared_by
+        else: 
+            form_shared_by=3
+
+
+        if int(q_method)!=-1:
+            queries.append(Purchase.method_id==q_method)
+            form_method=q_method
+            
+            for method in methods:
+                if method.id == int(form_method):
+                    form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                    form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
+                    
+                    if form_msum1.mySum and int(form_paid_by)!=2:
+                        form_msumpaidby1 = float(form_msum1.mySum)
+                    else:
+                        form_msumpaidby1 = 0
+                    if form_msum2.mySum and int(form_paid_by)!=1:
+                        form_msumpaidby2 = float(form_msum2.mySum)
+                    else:
+                        form_msumpaidby2 = 0
+
+                    form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+                    msum1+=form_msumpaidby1
+                    msum2+=form_msumpaidby2
+                else:
+                    form_method_sums.append([method.method,0,0])
+
+        else:
+            form_method=-1
+            for method in methods:
+                form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                form_msum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
+                
+                if form_msum1.mySum and int(form_paid_by)!=2:
+                    form_msumpaidby1 = float(form_msum1.mySum)
+                else:
+                    form_msumpaidby1 = 0
+                if form_msum2.mySum and int(form_paid_by)!=1:
+                    form_msumpaidby2 = float(form_msum2.mySum)
+                else:
+                    form_msumpaidby2 = 0
+
+                form_method_sums.append([method.method,form_msumpaidby1,form_msumpaidby2])
+                msum1+=form_msumpaidby1
+                msum2+=form_msumpaidby2
+        
+        if int(q_card)!=-1:
+            queries.append(Purchase.card_id==q_card)
+            form_card=q_card
+            
+            for card in cards:
+                if card.id == int(form_card):
+                    form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                    form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
+                    
+                    if form_csum1.mySum and int(form_paid_by)!=2:
+                        form_csumpaidby1 = float(form_csum1.mySum)
+                    else:
+                        form_csumpaidby1 = 0
+                    if form_csum2.mySum and int(form_paid_by)!=1:
+                        form_csumpaidby2 = float(form_csum2.mySum)
+                    else:
+                        form_csumpaidby2 = 0
+
+                    form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+                    csum1+=form_csumpaidby1
+                    csum2+=form_csumpaidby2
+                else:
+                    form_card_sums.append([card.card,0,0])
+
+        else:
+            form_card=-1
+            for card in cards:
+                form_csum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1,Purchase.seller.contains(form_seller))).first()
+                form_csum2=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.card_id==card.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==2,Purchase.seller.contains(form_seller))).first()
+                
+                if form_csum1.mySum and int(form_paid_by)!=2:
+                    form_csumpaidby1 = float(form_csum1.mySum)
+                else:
+                    form_csumpaidby1 = 0
+                if form_csum2.mySum and int(form_paid_by)!=1:
+                    form_csumpaidby2 = float(form_csum2.mySum)
+                else:
+                    form_csumpaidby2 = 0
+
+                form_card_sums.append([card.card,form_csumpaidby1,form_csumpaidby2])
+                csum1+=form_csumpaidby1
+                csum2+=form_csumpaidby2
+
+        purchases = db.session.query(Purchase).filter(*queries, Purchase.date>=datetime.strptime(q_start_date, '%Y-%m-%d').date(),Purchase.date<=datetime.strptime(q_end_date, '%Y-%m-%d').date(),Purchase.seller.contains(form_seller)).order_by(desc(Purchase.date)).all()
+
+
+    if form.validate_on_submit():
+        print("purchases validated")
+        criteria_start_date=form.start_date.data
+        criteria_end_date=form.end_date.data
+        criteria_paid_by=form.paid_by.data
+        criteria_shared_by=form.shared_by.data
+        criteria_card=form.card_id.data
+        criteria_method=form.method_id.data
+        if form.seller.data == "":
+            criteria_seller='*'
+        else:    
+            criteria_seller=form.seller.data
+
+        if criteria_end_date>datetime.today().date():
+            criteria_end_date=datetime.today().date()
+            flash(f'End date set to today.','danger')
+
+        print(criteria_start_date)
+        print(criteria_end_date)
+        print(criteria_paid_by)
+        print(criteria_card)
+        print(criteria_method)
+        print(criteria_seller)
+        print(criteria_shared_by)
+
+        return redirect(url_for('purchases', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, shared_by=criteria_shared_by, method=criteria_method, card=criteria_card, seller=criteria_seller))
+
+    print(form_start)
+    print(form_end)
+    print(form_paid_by)
+    print(form_seller)
+    print(form_card)
+    print(form_method)
+    print(form_shared_by)
+
+    return render_template('purchases.html', title='Purchases', form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_shared_by=form_shared_by, form_seller=form_seller, form_card=form_card, form_method=form_method, purchases=purchases, user1=current_user.username1, user2=current_user.username2, method_sums=form_method_sums, msum1=msum1, msum2=msum2, card_sums=form_card_sums, csum1=csum1, csum2=csum2)
 
 @app.route('/transfers/', methods=['GET','POST'])
 def transfers():
@@ -496,9 +868,7 @@ def account():
 
     return render_template('account.html', title="Account", form=form)
 
-@app.route('/about/')
-def about():
-    return render_template('about.html', title="About")
+
 
 @app.route('/purchase/new', methods=['GET','POST'])
 @login_required
@@ -510,20 +880,28 @@ def new_purchase():
     form.method_id.choices = [(method.id, method.method) for method in methods]
     cards = Card.query.filter_by(user_id=current_user.id).all()
     form.card_id.choices = [(card.id, card.card) for card in cards]
-
+    categories = Category.query.filter_by(user_id=current_user.id).all()
+    form.category_id.choices = [(category.id, category.title) for category in categories]
+    subcategories = Subcategory.query.filter_by(category_id=categories[0].id).all()
+    form.subcategory_id.choices = [(subcategory.id, subcategory.subtitle) for subcategory in subcategories]
    
     if form.validate_on_submit():
         method = Method.query.filter_by(user_id=current_user.id, id=form.method_id.data).first()
         card = Card.query.filter_by(user_id=current_user.id, id=form.card_id.data).first()
-        
-        print(form.paid_by.data)
-        print(method)
-        print(card)
+        category = Category.query.filter_by(user_id=current_user.id, id=form.category_id.data).first()
+        subcategory = Subcategory.query.filter_by(id=form.subcategory_id.data).first()
+
         method_used = method.id if int(form.paid_by.data)!=3 else 0
-        card_used = card.id if int(form.paid_by.data)==3 else 0        
+        card_used = card.id if int(form.paid_by.data)==3 else 0    
+        subcategory_used = form.subcategory_id.data
+
         print(method_used)
         print(card_used)
-        purchase = Purchase(date=form.date.data, amount=form.amount.data, paid_by=form.paid_by.data, method_id=method_used, card_id=card_used, seller=form.seller.data, user1_pct=100-form.share.data, notes=form.notes.data, user_id=current_user.id)
+        print(subcategory_used)
+        print(form.amount.data)
+
+
+        purchase = Purchase(date=form.date.data, amount=form.amount.data, paid_by=form.paid_by.data, method_id=method_used, card_id=card_used, seller=form.seller.data, user1_pct=100-form.share.data, subcategory_id=subcategory_used ,notes=form.notes.data, user_id=current_user.id)
         db.session.add(purchase)
         db.session.commit()
         flash(f'Your purchase has been added!','success')
