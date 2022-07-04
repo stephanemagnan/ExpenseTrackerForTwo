@@ -6,20 +6,20 @@
             <legend class="border-bottom mb-4">
                 <div class="row">
                     <div class="col">
-                        Direct Payment Accounts
+                        Personal Accounts
                     </div>
                     <div class="col-4">
-                        <a href="{{ url_for('new_method') }}">Add a direct account</a>
+                        <a href="{{ url_for('new_method') }}">Add a personal account</a>
                     </div>
                 </div>
             </legend>
-            <p class='text-muted'>Each purchase is automatically considered a payment by the payer (e.g., eTransfer, Cash):</p>
+            <p class='text-muted'>Personal accounts are settled automatically - no need to add payments  (e.g., eTransfer, Cash):</p>
             <div class="table-responsive">
                 <table class="table table-striped">
-                    <caption>List of direct payment methods</caption>
+                    <caption>List of personal accounts</caption>
                     <thead>
                     <tr>
-                        <th scope="col"> Direct Payment Method </th>
+                        <th scope="col"> Personal Accounts </th>
                     </tr>
                     </thead>
                     <tbody>
@@ -52,20 +52,20 @@
             <legend class="border-bottom mb-4">
                 <div class="row">
                     <div class="col">
-                        Indirect Payment Accounts
+                        Shared Accounts
                     </div>
                     <div class="col-4">
-                        <a href="{{ url_for('new_card') }}">Add an indirect account</a>
+                        <a href="{{ url_for('new_card') }}">Add a shared account</a>
                     </div>
                 </div>
             </legend>
-            <p class='text-muted'>You only get credit for purchases using this account through Payments (e.g., credit cards):</p>
+            <p class='text-muted'>Shared accounts must be settled through payments (e.g., joint credit cards):</p>
             <div class="table-responsive">
                 <table class="table table-striped">
-                    <caption>List of indirect payment methods</caption>
+                    <caption>List of joint accounts</caption>
                     <thead>
                     <tr>
-                        <th scope="col"> Indirect Payment Methods </th>
+                        <th scope="col"> Joint Account </th>
                     </tr>
                     </thead>
                     <tbody>
@@ -84,7 +84,7 @@
                 <li class="list-group-item list-group-item-light">{{card}}</li>
                 {% endfor %}
                 {% if false %}
-                <a class="nav-item nav-link" href="{{ url_for('new_card') }}">New Method</a>
+                <a class="nav-item nav-link" href="{{ url_for('new_card') }}">New join account</a>
                 {% endif %}
             </ul>
             {% endif %}

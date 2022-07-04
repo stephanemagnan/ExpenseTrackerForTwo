@@ -4,7 +4,7 @@ from app.forms import PurchaseForm, PaymentForm, TransferForm, PurchaseQueryForm
 from app.models import User, Method, Card, Category, Subcategory, Payment, Transfer, Purchase
 from flask import escape, request, render_template, session, url_for, flash, redirect, send_from_directory
 from flask_login import login_user, current_user, logout_user, login_required
-from sqlalchemy import and_, desc, func
+from sqlalchemy import and_, desc, false, func
 
 entries = []
 
@@ -18,7 +18,7 @@ def removePuchase():
 
         db.session.delete(purchase)
         db.session.commit()
-        
+
         return "OK"
 
 @app.route('/db/savepurchase/', methods=['GET'])
@@ -37,9 +37,16 @@ def savePuchase():
         this_card = int(request.args.get('card'))
         this_note = request.args.get('note')
 
+        print(this_subcategory_id)
+
         if this_purchase_id<=0:
-            purchase = Purchase(date=this_date, amount=this_amount, paid_by=this_paidby, method_id=this_method, card_id=this_card, seller=this_merchant, user1_pct=100-this_split, subcategory_id=this_subcategory_id ,notes=this_note, user_id=current_user.id)
+            purchase = Purchase(date=this_date, amount=this_amount, paid_by=this_paidby, method_id=this_method, card_id=this_card, seller=this_merchant, user1_pct=100-this_split, notes=this_note, subcategory_id=this_subcategory_id ,user_id=current_user.id)
+
             db.session.add(purchase)
+            db.session.commit()
+
+            return str(purchase.id)
+
         else:
             purchase = Purchase.query.filter_by(id=this_purchase_id).first()
             purchase.date=this_date
@@ -51,15 +58,81 @@ def savePuchase():
             purchase.method_id=this_method
             purchase.card_id=this_card
             purchase.subcategory_id=this_subcategory_id
-       
-        print(purchase)
 
-        db.session.commit()
+            db.session.commit()
+            return "OK"
 
-        return "OK"
+@app.route('/getmethods/', methods=['GET'])
+def methodsOptions():
+    methods = Method.query.filter_by(user_id=current_user.id).all()
+    # methods_list = [(-1,'None')]+[(method.id, method.method) for method in methods]
+    opt_string = '<option value="-1" selected="selected"> None </option>'
+    for this_method in methods:
+        opt_string+='<option value="'
+        opt_string+= str(this_method.id)
+        opt_string+='"'
+        opt_string+='>'
+        opt_string+=this_method.method
+        opt_string+='</option> '
+    
+    return opt_string
+
+@app.route('/getcards/', methods=['GET'])
+def cardOptions():
+    
+    cards = Card.query.filter_by(user_id=current_user.id).all()
+    # cards_list = [(-1,'None')]+[(card.id, card.card) for card in cards]
+    opt_string = '<option value="3" selected="selected"> None </option>'
+    for this_card in cards:
+        opt_string+='<option value="'
+        opt_string+= str(this_card.id)
+        opt_string+='"'
+        opt_string+='>'
+        opt_string+=this_card.card
+        opt_string+='</option> '
+    
+    return opt_string
+
+@app.route('/getpaidbys/', methods=['GET'])
+def paidbyOptions():
+    
+    cards = Card.query.filter_by(user_id=current_user.id).all()
+    # [(3,'Card')]+[(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    opt_string = '<option value="-1" selected="selected"> None </option>'
+    paidbys = [(1,current_user.username1+'*'),(2,current_user.username2+'*')]
+    for this_paidby_id, this_paidby_name in paidbys:
+        opt_string+='<option value="'
+        opt_string+= str(this_paidby_id)
+        opt_string+='"'
+        opt_string+='>'
+        opt_string+=this_paidby_name
+        opt_string+='</option> '
+    
+    return opt_string
+
+@app.route('/getcats/', methods=['GET'])
+def categoryOptions():
+    
+    category_id = request.args.get('cat_id')
+        
+    categories = Category.query.filter_by(user_id=current_user.id).all()
+    opt_string = ''
+    first_opt=True
+    for this_category in categories:
+        opt_string+='<option value="'
+        opt_string+= str(this_category.id)
+        opt_string+='"'
+        if first_opt:
+            opt_string+=' selected="selected" '
+            first_opt=False
+        opt_string+='>'
+        opt_string+=this_category.title
+        opt_string+='</option> '
+    
+    return opt_string
 
 
-@app.route('/subcats/', methods=['GET'])
+@app.route('/getsubcats/', methods=['GET'])
 def subcategoryOptions():
     
     if request.args: #request.method == 'GET':
@@ -69,12 +142,19 @@ def subcategoryOptions():
         purchase = Purchase.query.filter_by(id=purchase_id).first()
         subcategories = Subcategory.query.filter_by(category_id=category_id).all()
         opt_string = ''
+        # print(subcategories)
+        first_opt=True
         for this_subcategory in subcategories:
             opt_string+='<option value="'
             opt_string+= str(this_subcategory.id)
             opt_string+='"'
-            if category_id==purchase.subcategoryer.subcategoryer.id and this_subcategory.id==purchase.subcategoryer.id:
-                opt_string+=' selected="selected '
+            if purchase_id != "-1":
+                if category_id==purchase.subcategoryer.subcategoryer.id and this_subcategory.id==purchase.subcategoryer.id:
+                    opt_string+=' selected="selected" '
+            else:
+                if first_opt:
+                    opt_string+=' selected="selected" '
+                    first_opt=False
             opt_string+='>'
             opt_string+=this_subcategory.subtitle
             opt_string+='</option> '
@@ -141,7 +221,7 @@ def about():
         form_seller=''
 
         purchases = db.session.query(Purchase).filter(and_(Purchase.user_id==current_user.id, Purchase.date>=datetime.today().date().replace(day=1))).order_by(desc(Purchase.date)).all()
-        print(payments)
+        # print(payments)
 
         for method in methods:
             form_msum1=Purchase.query.with_entities(func.sum(Purchase.amount).label("mySum")).filter(and_(Purchase.user_id==current_user.id, Purchase.method_id==method.id, Purchase.date>=datetime.today().date().replace(day=1),Purchase.paid_by==1)).first()
@@ -314,25 +394,25 @@ def about():
             criteria_end_date=datetime.today().date()
             flash(f'End date set to today.','danger')
 
-        print(criteria_start_date)
-        print(criteria_end_date)
-        print(criteria_paid_by)
-        print(criteria_card)
-        print(criteria_method)
-        print(criteria_seller)
-        print(criteria_shared_by)
+        # print(criteria_start_date)
+        # print(criteria_end_date)
+        # print(criteria_paid_by)
+        # print(criteria_card)
+        # print(criteria_method)
+        # print(criteria_seller)
+        # print(criteria_shared_by)
 
         return redirect(url_for('about', start_date=criteria_start_date,end_date=criteria_end_date,paid_by=criteria_paid_by, shared_by=criteria_shared_by, method=criteria_method, card=criteria_card, seller=criteria_seller))
 
-    print(form_start)
-    print(form_end)
-    print(form_paid_by)
-    print(form_seller)
-    print(form_card)
-    print(form_method)
-    print(form_shared_by)
+    # print(form_start)
+    # print(form_end)
+    # print(form_paid_by)
+    # print(form_seller)
+    # print(form_card)
+    # print(form_method)
+    # print(form_shared_by)
 
-    print(purchases)
+    # print(purchases)
 
     return render_template('about.html', title='About', form=form, form_start=form_start, form_end=form_end, form_paid_by=form_paid_by, form_shared_by=form_shared_by, form_seller=form_seller, form_card=form_card, form_method=form_method, purchases=purchases, user1=current_user.username1, user2=current_user.username2, method_sums=form_method_sums, msum1=msum1, msum2=msum2, card_sums=form_card_sums, csum1=csum1, csum2=csum2, paid_by_list=paid_by_list,methods_list=methods_list,cards_list=cards_list, category_list=category_list, subcategory_list=subcategory_list)
 

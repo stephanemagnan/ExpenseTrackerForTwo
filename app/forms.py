@@ -124,7 +124,7 @@ class MethodForm(FlaskForm):
 
 class PurchaseQueryForm(FlaskForm):
     start_date = DateField('Start Date', validators=[DataRequired()])
-    end_date = DateField('Purchase Date', validators=[DataRequired()])
+    end_date = DateField('End Date', validators=[DataRequired()])
     paid_by = SelectField('Paid by', validators=[DataRequired()])
     shared_by = SelectField('Shared by', validators=[DataRequired()])
     method_id = SelectField('Method', validators=[DataRequired()])

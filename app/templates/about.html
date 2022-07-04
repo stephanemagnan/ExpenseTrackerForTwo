@@ -55,18 +55,6 @@
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            <div class="form-row">
-                <div class="col">
-                    <div class="form-group">
-                        {{ form.shared_by.label(class="form-control-label") }}
-                        {% if form_shared_by%}
-                            {{ form.shared_by(class="form-control ", value=form_shared_by) }}
-                        {% else %}
-                            {{ form.shared_by(class="form-control ") }}
-                        {% endif %}
-                    </div>
-                </div>
                 <div class="col">
                     <div class="form-group">
                         {{ form.method_id.label(class="form-control-label") }}
@@ -91,6 +79,28 @@
             <div class="form-row">
                 <div class="col">
                     <div class="form-group">
+                        {{ form.shared_by.label(class="form-control-label") }}
+                        {% if form_shared_by%}
+                            {{ form.shared_by(class="form-control ", value=form_shared_by) }}
+                        {% else %}
+                            {{ form.shared_by(class="form-control ") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.category_id.label(class="form-control-label") }}
+                        {{ form.category_id(class="form-control ") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        {{ form.subcategory_id.label(class="form-control-label") }}
+                        {{ form.subcategory_id(class="form-control ") }}
+                    </div> 
+                </div>
+                <div class="col">
+                    <div class="form-group">
                         {{ form.seller.label(class="form-control-label") }}
         
                         {% if form.seller.errors %}
@@ -106,20 +116,7 @@
                     </div>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="col">
-                    <div class="form-group">
-                        {{ form.category_id.label(class="form-control-label") }}
-                        {{ form.category_id(class="form-control ") }}
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="form-group">
-                        {{ form.subcategory_id.label(class="form-control-label") }}
-                        {{ form.subcategory_id(class="form-control ") }}
-                    </div> 
-                </div>
-            </div>
+            
         </fieldset>
         <div class="form-group">
             {{ form.submit(class="btn btn-outline-info") }}
@@ -175,6 +172,7 @@
                 <span class="oi oi-data-transfer-upload" title="data-transfer-upload" aria-hidden="true"></span>
             </a>
         </span>
+        <input type="file" id="upload-file" style="display:none">
         <span class="table-add float-right mb-3 mr-2">
             <a href="#!">
                 <span class="oi oi-plus" title="plus" aria-hidden="true"></span>
@@ -345,8 +343,6 @@
 
     <script>
 
-    
-        
         const $tableID = $('#table'); 
         const newTr = `
             <tr>
@@ -379,12 +375,12 @@
                         <div class="edit-locked" style="display:inline">50%-50%</div>
                     </td>
                     <td class="btns pt-3-half">
-                        <span class="table-edit" style="display:inline">
+                        <span class="table-edit" style="display:none">
                             <a href="#!">
                                 <span class="oi oi-pencil" title="edit" aria-hidden="true"></span>
                             </a>
                         </span>     
-                        <span class="table-save" style="display:none">
+                        <span class="table-save" style="display:inline">
                             <a href="#!" class="indigo-text">
                                 <span class="oi oi-check" title="save" aria-hidden="true"></span>
                             </a>
@@ -394,12 +390,12 @@
                                 <span class="oi oi-trash" title="delete" aria-hidden="true"></span>
                             </a>
                         </span> 
-                        <span class="table-expand" style="display:inline">
+                        <span class="table-expand" style="display:none">
                             <a href="#!" class="indigo-text">
                                 <span class="oi oi-expand-down" title="expand" aria-hidden="true"></span>
                             </a>
                         </span> 
-                        <span class="table-collapse" style="display:none">
+                        <span class="table-collapse" style="display:inline">
                             <a href="#!" class="indigo-text">
                                 <span class="oi oi-collapse-up" title="collapse" aria-hidden="true"></span>
                             </a>
@@ -438,34 +434,150 @@
         `;
 
         $('.table-add').on('click', 'a', () => {
-        // const $clone = $tableID.find('tbody tr ').last().clone(true).removeClass(' hide table - line '); 
-        //     if ($tableID.find('tbody tr ').length === 0) {
-        //     $('tbody').append(newTr);
-        // }
-        // $('tbody').append(newTr);
-        // console.log("added")
-        // $tableID.find('table').append($clone);
-        $("#table tbody").prepend(newTr);
+            // const $clone = $tableID.find('tbody tr ').last().clone(true).removeClass(' hide table - line '); 
+            //     if ($tableID.find('tbody tr ').length === 0) {
+            //     $('tbody').append(newTr);
+            // }
+            // $('tbody').append(newTr);
+            // console.log("added")
+            // $tableID.find('table').append($clone);
+            $("#table tbody").prepend(newTr);
 
-        // NOW NEED TO POPULATE ALL FIELDS:
+            // NOW NEED TO POPULATE ALL FIELDS:
+
+            
+            // var $row = $tableID.children('tr:first');
+            // var $row = $("#table>tbody")
+            var $row = $tableID.find('tbody').find('tr:first');
+
+            var $date = $row.find('td.date');
+            var $dateedit = $date.find('.edit-unlocked');
+
+            var $cat = $row.find('td.category');
+            var $catedit = $cat.find('.edit-unlocked');
+
+            var $subcat = $row.find('td.subcategory');
+            var $subcatedit = $subcat.find('.edit-unlocked');
+            
+            var $nrow = $row.next()
+
+            var $paidby = $nrow.find('td.paid-by');
+            var $paidbyedit = $paidby.find('.edit-unlocked');
+
+            var $meth = $nrow.find('td.method');
+            var $methedit = $meth.find('.edit-unlocked');
+
+            var $crd = $nrow.find('td.card2');
+            var $crdedit = $crd.find('.edit-unlocked');
+
+            // //DATE (first row)
+
+            var now = new Date();
+            var month = (now.getMonth() + 1);               
+            var day = now.getDate();
+            if (month < 10) 
+                month = "0" + month;
+            if (day < 10) 
+                day = "0" + day;
+            var today = now.getFullYear() + '-' + month + '-' + day;
+            $dateedit.val(today);
 
 
-        //DATE (first row)
+            //CATEGORY LIST (first row)
+            $.ajax({
+                type: "GET",
+                url: "/getcats/",
+                data: {
+                
+                },
+                success: function(msg) {
+                    console.log(msg);
+                    $catedit
+                    .find('option')
+                    .remove()
+                    .end()
+                    .append(msg)
 
-        //CATEGORY LIST (first row)
+                    // console.log($catedit)
+                    // //SUBCATEGORY LIST (first row)
+                    $.ajax({
+                        type: "GET",
+                        url: "/getsubcats/",
+                        data: {
+                        cat_id: $catedit.val(), purchase_id: -1
+                        },
+                        success: function(msg) {
+                            console.log(msg);
+                            $subcatedit
+                            .find('option')
+                            .remove()
+                            .end()
+                            .append(msg)
+                        }
+                    });
 
-        //SUBCATEGORY LIST (first row)
-
-        //PAIDBY (second row)
-
-        //CARDS (second row)
-
-        //METHODS (second row)
+                }
+            });
 
 
 
+            // //PAIDBY (second row)
+            $.ajax({
+                type: "GET",
+                url: "/getpaidbys/",
+                data: {
+                
+                },
+                success: function(msg) {
+                    // console.log(msg);
+                    $paidbyedit
+                    .find('option')
+                    .remove()
+                    .end()
+                    .append(msg)
+                }
+            });
 
-    });
+            //CARDS (second row)
+            $.ajax({
+                type: "GET",
+                url: "/getcards/",
+                data: {
+            
+                },
+                success: function(msg) {
+                    // console.log(msg);
+                    $crdedit
+                    .find('option')
+                    .remove()
+                    .end()
+                    .append(msg)
+                }
+            });
+
+            // //METHODS (second row)
+            $.ajax({
+                type: "GET",
+                url: "/getmethods/",
+                data: {
+                
+                },
+                success: function(msg) {
+                    // console.log(msg);
+                    $methedit
+                    .find('option')
+                    .remove()
+                    .end()
+                    .append(msg)
+                }
+            });
+        });
+
+        $('.table-upload').on('click', 'a', () => {
+            console.log("clicked")
+            console.log($('#upload-file'))
+           $('#upload-file').click();
+        });
 
     </script>
 
@@ -666,6 +778,10 @@
             },
             success: function(msg) {
                 console.log(msg);
+
+                if (msg != "OK"){
+                    $idtag.text(msg)
+                }
             }
         });
     });
@@ -763,7 +879,7 @@
 
         $.ajax({
             type: "GET",
-            url: "/subcats/",
+            url: "/getsubcats/",
             data: {
             cat_id: $catid, purchase_id: $purid
             },

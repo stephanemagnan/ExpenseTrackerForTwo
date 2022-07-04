@@ -10,7 +10,7 @@ def load_user(user_id):
 
 
 class User(db.Model, UserMixin):
-    id=db.Column(db.Integer,primary_key=True)
+    id=db.Column(db.Integer, autoincrement=True,primary_key=True)
     username1 = db.Column(db.String(20), nullable=False)
     username2 = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -27,7 +27,7 @@ class User(db.Model, UserMixin):
         return f"User('id:{self.id}','user1:{self.username1}','user2:{self.username2}','email:{self.email}')"
 
 class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     title = db.Column(db.String(20),nullable=False,unique=True)
 
     subcategories = db.relationship('Subcategory',backref='subcategoryer',lazy=True)
@@ -38,7 +38,7 @@ class Category(db.Model):
         return f"Category('id:{self.id}','user:{self.user_id}','title:{self.title}')"
 
 class Subcategory(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     subtitle = db.Column(db.String(20),nullable=False)
     
     
@@ -50,7 +50,7 @@ class Subcategory(db.Model):
         return f"Subcategory('self:{self.id}','category:{self.category_id}:{self.subcategoryer.title},'subtitle:{self.subtitle}'')"
 
 class Method(db.Model):
-    id = db.Column(db.Integer,primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True,primary_key=True)
     method = db.Column(db.String(20),nullable=False,unique=True)
    
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
@@ -60,8 +60,9 @@ class Method(db.Model):
         return f"Method('id:{self.id}','method:{self.method}')"
 
 class Card(db.Model):
-    id = db.Column(db.Integer,primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True,primary_key=True)
     card = db.Column(db.String(20),nullable=False,unique=True)
+    
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     payments = db.relationship('Payment',backref='card_paid',lazy=True)
@@ -71,7 +72,7 @@ class Card(db.Model):
         return f"Card('id:{self.id}','user:{self.user_id}','card:{self.card}')"
 
 class Transfer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     date = db.Column(db.Date,nullable=False,default=date.today)
     paid_by = db.Column(db.Integer,nullable=False)
     amount = db.Column(db.Numeric,nullable=False)
@@ -83,7 +84,7 @@ class Transfer(db.Model):
         return f"Transfer('id:{self.id}','user:{self.user_id}','date:{self.date}','paid by:{self.paid_by}','amount:{self.amount}')"
 
 class Payment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     date = db.Column(db.Date,nullable=False,default=date.today)
     paid_by = db.Column(db.Integer,nullable=False)
     amount = db.Column(db.Numeric,nullable=False)
@@ -96,7 +97,7 @@ class Payment(db.Model):
         return f"Payment('id:{self.id}','user:{self.user_id}','date:{self.date}','paid by:{self.paid_by}','amount:{self.amount}','card:{self.card_id}')"
 
 class Purchase(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     date = db.Column(db.Date,nullable=False,default=date.today)
     amount = db.Column(db.Numeric,nullable=False)
     seller = db.Column(db.String(120),nullable=False)
@@ -110,5 +111,7 @@ class Purchase(db.Model):
     subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'), nullable=True)
     
     def __repr__(self):
-        return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date},'method_id:{self.method_id}','card_id:{self.card_id},'amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}','paidby:{self.paid_by}','category:{self.subcategoryer.subcategoryer.id}:{self.subcategoryer.subcategoryer.title}','subcategory:{self.subcategoryer.id}:{self.subcategoryer.subtitle}')"
+        return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date}','method_id:{self.method_id}','card_id:{self.card_id}','amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}','paidby:{self.paid_by}','category:{self.subcategoryer.subcategoryer.id}:{self.subcategoryer.subcategoryer.title}','subcategory:{self.subcategoryer.id}:{self.subcategoryer.subtitle}')"
+        # return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date}','method_id:{self.method_id}','card_id:{self.card_id}','amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}','paidby:{self.paid_by}','subcategory:{self.subcategoryer.id}:{self.subcategoryer.subtitle}')"
 
+        # return f"Purchase('id:{self.id}','user:{self.user_id}','date:{self.date}','method_id:{self.method_id}','card_id:{self.card_id}','amount:{self.amount}','seller:{self.seller}','share:{self.user1_pct}','paidby:{self.paid_by}')"
